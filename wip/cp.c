@@ -84,7 +84,7 @@ void scram (void)
  * Otherwise, only basic permissions will be copied (as with regular cp).
  * Returns 0=success, 1=warnings, 2=failure.
  */
-int copyfile (char *from, char *to, int attr)
+int copyfile (char *from, char *to)
 {
  int e;
  int r;
@@ -183,7 +183,7 @@ int copyfile (char *from, char *to, int attr)
  
  r=0;
  
- if (attr)
+ if (mode&MODE_P)
  {
   /* Change the owner; if we can't, disable SUID-SGID */
   e=fchown(fileno(out), u, g);
@@ -212,7 +212,7 @@ int copyfile (char *from, char *to, int attr)
  fclose(in);
  fclose(out);
  
- if (!attr) return r;
+ if (!(mode&MODE_P)) return r;
  
  /* Copy timestamps */
 #ifdef CP_OLD_UTIME
@@ -261,8 +261,92 @@ int ckzot (char *fn)
  return 0;
 }
 
+int smart_cp (char *from, char *to)
+{
+ /* Scream if we can't figure out what we're moving. */
+ if (((mode&MODE_L)?stat:lstat)(from, &statbuf))
+ {
+  xperror(from);
+  return 1;
+ }
+ 
+ if (ckzot(to)) return 1;
+ 
+ /* Don't touch pipes or sockets.  Just scream and scram. */
+ if ((statbuf.st_mode & S_IFMT) == S_IFDIR)
+ {
+  if (mkdir(to, statbuf.st_mode))
+  {
+   xperror(to);
+   return 1;
+  }
+  if (mode&MODE_V)
+   printf ("created %s\n", to);
+  return 0;
+ }
+ if ((statbuf.st_mode & S_IFMT) == S_IFIFO)
+ {
+  fprintf (stderr, "%s: %s: not cloning pipe\n", progname, from);
+  return 1;
+ }
+ if ((statbuf.st_mode & S_IFMT) == S_IFSOCK)
+ {
+  fprintf (stderr, "%s: %s: not cloning socket\n", progname, from);
+  return 1;
+ }
+ 
+ /* Block special, character special, and symlink files: clone them. */
+ if (statbuf.st_mode & (S_IFBLK|S_IFCHR))
+ {
+  if (mknod(to, statbuf.st_mode, statbuf.st_rdev))
+  {
+   xperror(to);
+   return 1;
+  }
+  if (mode&MODE_V)
+   printf ("cloned %s -> %s\n", from, to);
+  return 0;
+ }
+ if ((statbuf.st_mode & S_IFMT) == S_IFLNK)
+ {
+  char *mkln;
+  
+  mkln=malloc(PATH_MAX);
+  if (!mkln) scram();
+
+  memset(mkln, 0, PATH_MAX);
+  if (readlink(from, mkln, PATH_MAX)==-1)
+  {
+   free(mkln);
+   xperror(from);
+   return 1;
+  }
+  if (symlink(mkln, to))
+  {
+   free(mkln);
+   xperror(to);
+   return 1;
+  }
+  free(mkln);
+  if (mode&MODE_V)
+   printf ("cloned %s -> %s\n", from, to);
+  return 0;
+ }
+
+ /* Other files: copy them. */
+ if (copyfile(from, to)<2)
+ {
+  if (mode&MODE_V)
+   printf ("copied %s -> %s\n", from, to);
+  return 0;
+ }
+ return 1;
+}
+
 int do_cp (char *from, char *to)
 {
+ int e;
+ 
  /* Can't stat; no sense progressing further */
  if (lstat(from, &statbuf))
  {
@@ -270,8 +354,11 @@ int do_cp (char *from, char *to)
   return 1;
  }
  
- /* -H - resolve symlinks on the command line only */
- if ((statbuf.st_mode & S_IFMT) == S_IFLNK)
+ /*
+  * -H - resolve symlinks on the command line only 
+  * -L - resolve all symlinks
+  */
+ if ((mode&(MODE_H|MODE_L))&&((statbuf.st_mode & S_IFMT) == S_IFLNK))
  {
   char *mkln;
   
@@ -286,6 +373,19 @@ int do_cp (char *from, char *to)
   e=do_cp(mkln, to);
   free(mkln);
   return e;
+ }
+ 
+ if ((statbuf.st_mode & S_IFMT) == S_IFDIR)
+ {
+  if (mode&MODE_R)
+  {
+   /* XXX */
+  }
+  else
+  {
+   fprintf (stderr, "%s: %s: skipping directory\n", from);
+   return 1;
+  }
  }
 }
 
