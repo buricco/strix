@@ -350,6 +350,7 @@ int iterate_hit (const char *filename, const struct stat *statptr,
  int e;
  char *p;
  char mkfn[PATH_MAX];
+ char *mkln;
  
  /* Create target filename */
  p=(char *)(filename+strlen(ref_in)+1);
@@ -374,24 +375,30 @@ int iterate_hit (const char *filename, const struct stat *statptr,
             progname, filename);
    return 0;
   case FTW_SL: /* Working symlink: clone it, then zot */
+  
+   mkln=malloc(PATH_MAX);
+   if (!mkln) scram();
    memset(mkln, 0, PATH_MAX);
    if (readlink(filename, mkln, PATH_MAX)==-1)
    {
+    free(mkln);
     xperror(filename);
     global_e=1;
     return 0;
    }
    if (symlink(mkln, mkfn))
    {
+    free(mkln);
     xperror(mkfn);
     global_e=1;
     return 0;
    }
-   if (verbose)
+   free(mkln);
+   if (mode&MODE_V)
     printf ("cloned %s -> %s\n", filename, mkfn);
  }
  
- e=smart_cp(filename, mkfn);
+ e=smart_cp((char *)filename, mkfn);
  if (global_e<e) global_e=e;
  return 0;
 }
@@ -439,7 +446,7 @@ int do_cp (char *from, char *to)
   if (mode&MODE_R)
   {
    ref_in=from;
-   ref_out=outfn;
+   ref_out=to;
    global_e=0;
    nftw(from, iterate_hit, ITERATE_MAX_HANDLES, (mode&MODE_P)?FTW_PHYS:0);
    return global_e;
@@ -450,6 +457,8 @@ int do_cp (char *from, char *to)
    return 1;
   }
  }
+ 
+ return smart_cp(from, to);
 }
 
 void usage (void)
@@ -468,7 +477,7 @@ int main (int argc, char **argv)
  if (progname) progname++; else progname=argv[0];
 
  /* The -r and -n switches are intentionally left undocumented. */
- while (-1!=(e=getopt(argc, argv, "HLPRfinprv")))
+ while (-1!=(e=getopt(argc, argv, "HLPRafinprv")))
  {
   switch (e)
   {
