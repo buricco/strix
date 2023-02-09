@@ -54,15 +54,14 @@ static char *copyright="@(#) (C) Copyright 2023 S. V. Nickolas\n";
 
 static char *progname;
 
-#define MODE_H 0x0001
-#define MODE_L 0x0002
-#define MODE_P 0x0004
-#define MODE_R 0x0008
-#define MODE_f 0x0010
-#define MODE_i 0x0020
-#define MODE_n 0x0040
-#define MODE_p 0x0080
-#define MODE_v 0x0100
+#define MODE_H 0x01 /* Resolve symlinks explicitly specified */
+#define MODE_L 0x02 /* Resolve all symlinks                  */
+#define MODE_R 0x04 /* Recurse into folders                  */
+#define MODE_F 0x08 /* Force overwrite                       */
+#define MODE_I 0x10 /* Prompt on overwrite                   */
+#define MODE_N 0x20 /* Silently refuse to overwrite          */
+#define MODE_P 0x40 /* Preserve more attributes when copying */
+#define MODE_V 0x80 /* Verbose                               */
 int mode;
 
 struct stat statbuf;
@@ -70,6 +69,12 @@ struct stat statbuf;
 void xperror (const char *filename)
 {
  fprintf (stderr, "%s: %s: %s\n", progname, filename, strerror(errno));
+}
+
+void scram (void)
+{
+ fprintf (stderr, "%s: out of memory\n", progname);
+ exit(1);
 }
 
 /*
@@ -218,8 +223,70 @@ int copyfile (char *from, char *to, int attr)
  return r;
 }
 
+/* Check whether we need to prompt. */
+int ckzot (char *fn)
+{
+ /* If we can't lstat() the file, there's probably nothing to clobber. */
+ if (!lstat(fn, &statbuf))
+  return 0;
+ 
+ if (mode&MODE_N) /* No clobber (GNU, FreeBSD) */
+  return 1;
+ 
+ if (mode&MODE_I) /* Prompt before zotting. */
+ {
+  while (1)
+  {
+   char p[20];
+     
+   fflush(stdin);
+   printf ("%s: clobber %s (y/n)? ", progname, fn);
+   fgets(p, 19, stdin);
+   if (feof(stdin)) exit(1);
+   if (*p=='y') break;
+   if (*p=='n') return 1;
+  }
+    
+  /* Eff outta here. */
+  if (unlink(fn))
+  {
+   xperror(fn);
+   return 1;
+  }
+ }
+ 
+ if (mode&MODE_F) /* Always zot. */
+  unlink(fn);
+ 
+ return 0;
+}
+
 int do_cp (char *from, char *to)
 {
+ /* Can't stat; no sense progressing further */
+ if (lstat(from, &statbuf))
+ {
+  xperror(from);
+  return 1;
+ }
+ 
+ /* -H - resolve symlinks on the command line only */
+ if ((statbuf.st_mode & S_IFMT) == S_IFLNK)
+ {
+  char *mkln;
+  
+  mkln=malloc(PATH_MAX);
+  if (!mkln) scram();
+  memset(mkln, 0, PATH_MAX);
+  if (readlink(from, mkln, PATH_MAX)==-1)
+  {
+   xperror(from);
+   return 1;
+  }
+  e=do_cp(mkln, to);
+  free(mkln);
+  return e;
+ }
 }
 
 void usage (void)
@@ -242,41 +309,40 @@ int main (int argc, char **argv)
   switch (e)
   {
    case 'H':
-    mode &= ~(MODE_L|MODE_P);
+    mode &= ~MODE_L;
     mode |= MODE_H;
     break;
    case 'L':
-    mode &= ~(MODE_H|MODE_P);
+    mode &= ~MODE_H;
     mode |= MODE_L;
     break;
    case 'P':
     mode &= ~(MODE_H|MODE_L);
-    mode |= MODE_P;
     break;
    case 'R': /* FALL THROUGH */
    case 'r':
     mode |= MODE_R;
     break;
    case 'f':
-    mode &= ~(MODE_i|MODE_n);
-    mode |= MODE_f;
+    mode &= ~(MODE_I|MODE_N);
+    mode |= MODE_F;
     break;
    case 'i':
-    mode &= ~(MODE_f|MODE_n);
-    mode |= MODE_i;
+    mode &= ~(MODE_F|MODE_N);
+    mode |= MODE_I;
     break;
    case 'n':
-    mode &= ~(MODE_f|MODE_i);
-    mode |= MODE_n;
+    mode &= ~(MODE_F|MODE_I);
+    mode |= MODE_N;
     break;
    case 'p':
-    mode |= MODE_p;
+    mode |= MODE_P;
     break;
    case 'v':
-    mode |= MODE_v;
+    mode |= MODE_V;
     break;
    case 'a': /* -a = -RpP */
-    mode |= (MODE_R|MODE_P|MODE_p);
+    mode |= (MODE_R|MODE_P);
     mode &= ~(MODE_L|MODE_H);
     break;
    default:

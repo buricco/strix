@@ -99,7 +99,7 @@ int copyfile (char *from, char *to)
  r=0;
  
  /* Can't get info from file; scream */
- if (stat(from, &statbuf))
+ if (lstat(from, &statbuf))
  {
   xperror(from);
   return 2;
@@ -217,7 +217,7 @@ int copyfile (char *from, char *to)
 int cpmv (char *from, char *to)
 {
  /* Scream if we can't figure out what we're moving. */
- if (stat(from, &statbuf))
+ if (lstat(from, &statbuf))
  {
   xperror(from);
   return 1;
@@ -309,8 +309,8 @@ int cpmv (char *from, char *to)
 /* Check whether we need to prompt. */
 int ckzot (char *fn)
 {
- /* If we can't stat() the file, there's probably nothing to clobber. */
- if (!stat(fn, &statbuf))
+ /* If we can't lstat() the file, there's probably nothing to clobber. */
+ if (!lstat(fn, &statbuf))
   return 0;
  
  if (mode==MODE_N) /* No clobber (GNU, FreeBSD) */
@@ -337,6 +337,9 @@ int ckzot (char *fn)
    return 1;
   }
  }
+ 
+ if (mode==MODE_F) /* Always zot. */
+  unlink(fn);
  
  return 0;
 }
@@ -436,7 +439,7 @@ int special_mv (char *from, char *to)
  if (b) b++; else b=from;
  
  /* Does "to" exist? */ 
- if (!stat(to, &statbuf))
+ if (!lstat(to, &statbuf))
  {
   /* Is it a folder? */
   if (statbuf.st_mode&S_IFDIR)
@@ -479,7 +482,7 @@ int special_mv (char *from, char *to)
   * Rename failed because of EXDEV, so our target is on another drive.
   * If we are a single file, we could try copying and deleting...
   */
- if (stat(from, &statbuf))
+ if (lstat(from, &statbuf))
  {
   xperror(from);
   return 1;
@@ -555,7 +558,7 @@ int main (int argc, char **argv)
  /* More than 1 source parameter: target must exist and be a directory. */
  if (argc-optind>1)
  {
-  if (stat(target, &statbuf))
+  if (lstat(target, &statbuf))
   {
    xperror(target);
    return 1;
