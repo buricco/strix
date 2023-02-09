@@ -45,6 +45,7 @@ mesg
 mkdir
 mkfifo
 mknod
+mv
 mvdir
 newer
 news

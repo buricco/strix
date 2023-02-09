@@ -38,11 +38,6 @@
  exit 1
 }
 
-[ "`basename "\`pwd\`"`" = "micrux" ] || {
- echo "Cowardly refusing to run outside my tree."
- exit 1
-}
-
 [ -n "$1" ] && [ "$1" = "clean" ] && {
  rm -f support/signames.h
  rm -rf bin obj lib
@@ -106,6 +101,7 @@ $CC -D__SVR4__ -o ../bin/mesg mesg.c
 $CC -D__SVR4__ -I../support -o ../bin/mkdir mkdir.c ../support/setmode.c
 $CC -D__SVR4__ -I../support -o ../bin/mkfifo mkfifo.c ../support/setmode.c
 $CC -D__SVR4__ -o ../bin/mknod mknod.c
+$CC -D__SVR4__ -o ../bin/mv mv.c
 $CC -D__SVR4__ -o ../bin/newer newer.c
 $CC -D__SVR4__ -o ../bin/news news.c
 $CC -D__SVR4__ -o ../bin/nice nice.c

@@ -51,15 +51,20 @@
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+#include <utime.h>
 #include <ftw.h>
 
 #define ITERATE_MAX_HANDLES 5
+
+#ifdef __SVR4__
+#define CP_OLD_UTIME
+#endif
 
 static char *copyright="@(#) (C) Copyright 2023 S. V. Nickolas\n";
 
 static char *progname;
 
-enum {MODE_D, MODE_F, MODE_I} mode;
+enum {MODE_D, MODE_F, MODE_I, MODE_N} mode;
 int verbose;
 struct stat statbuf;
 int global_e;
@@ -73,6 +78,7 @@ void xperror (const char *filename)
  fprintf (stderr, "%s: %s: %s\n", progname, filename, strerror(errno));
 }
 
+/* Copy a file, preserving as many features as possible. */
 int copyfile (char *from, char *to)
 {
  int e;
@@ -92,12 +98,14 @@ int copyfile (char *from, char *to)
  
  r=0;
  
+ /* Can't get info from file; scream */
  if (stat(from, &statbuf))
  {
   xperror(from);
   return 2;
  }
- 
+
+ /* Save info */
  l=statbuf.st_size;
  u=statbuf.st_uid;
  g=statbuf.st_gid;
@@ -110,6 +118,7 @@ int copyfile (char *from, char *to)
  T[1]=statbuf.st_mtim;
 #endif
  
+ /* Open files */
  in=fopen(from, "rb");
  if (!in)
  {
@@ -125,6 +134,7 @@ int copyfile (char *from, char *to)
   return 2;
  }
  
+ /* Transfer data BUFSIZ bytes at a time */
  while (l>BUFSIZ)
  {
   e=fread(cpbuf, 1, BUFSIZ, in);
@@ -148,6 +158,7 @@ int copyfile (char *from, char *to)
   l-=BUFSIZ;
  }
  
+ /* Last partial block */
  if (l)
  {
   e=fread(cpbuf, 1, l, in);
@@ -181,6 +192,7 @@ int copyfile (char *from, char *to)
   r=1;
  }
  
+ /* Copy file mode */
  e=fchmod(fileno(out), m);
  if (e)
  {
@@ -194,7 +206,7 @@ int copyfile (char *from, char *to)
  
  /* Copy timestamps */
 #ifdef CP_OLD_UTIME
- e=utime(to, T);
+ e=utime(to, &T);
 #else
  e=utimensat(AT_FDCWD, to, T, 0);
 #endif
@@ -294,11 +306,15 @@ int cpmv (char *from, char *to)
  return 1;
 }
 
+/* Check whether we need to prompt. */
 int ckzot (char *fn)
 {
  /* If we can't stat() the file, there's probably nothing to clobber. */
  if (!stat(fn, &statbuf))
   return 0;
+ 
+ if (mode==MODE_N) /* No clobber (GNU, FreeBSD) */
+  return 1;
  
  if (mode==MODE_I) /* Prompt before zotting. */
  {
@@ -325,6 +341,7 @@ int ckzot (char *fn)
  return 0;
 }
 
+/* Clean up by zotting source directory tree */
 int iterate_zot (const char *filename, const struct stat *statptr, 
                  int fileflags, struct FTW *pftw)
 {
@@ -338,12 +355,14 @@ int iterate_zot (const char *filename, const struct stat *statptr,
  return 0;
 }
 
+/* Iterate over the tree moving files */
 int iterate_hit (const char *filename, const struct stat *statptr, 
                  int fileflags, struct FTW *pftw)
 {
  char *p;
  char mkfn[PATH_MAX];
  
+ /* Create target filename */
  p=(char *)(filename+strlen(ref_in)+1);
  if ((strlen(ref_in)+strlen(p)+2)>PATH_MAX)
  {
@@ -406,11 +425,13 @@ int iterate_hit (const char *filename, const struct stat *statptr,
  return 0;
 }
 
+/* Front end that will rename or copy/delete as needed */
 int special_mv (char *from, char *to)
 {
  int e;
  char *b;
  
+ /* Basename */
  b=strrchr(from, '/');
  if (b) b++; else b=from;
  
@@ -502,7 +523,7 @@ int main (int argc, char **argv)
   mode=MODE_F;
  
  verbose=0;
- while (-1!=(e=getopt(argc, argv, "fiv")))
+ while (-1!=(e=getopt(argc, argv, "fivn")))
  {
   switch (e)
   {
@@ -515,16 +536,21 @@ int main (int argc, char **argv)
    case 'v':
     verbose=1;
     break;
+   case 'n':
+    mode=MODE_N;
+    break;
    default:
     mv_usage();
   }
  }
  
+ /* Definitely missing a target path */
  if (argc-optind<2) mv_usage();
  
  /* Take the last argument, then strip it off. */
  target=argv[--argc];
- while (target[strlen(target)-1]=='/') target[strlen(target)-1]=0;
+ while (target[strlen(target)-1]=='/')
+  target[strlen(target)-1]=0;
  
  /* More than 1 source parameter: target must exist and be a directory. */
  if (argc-optind>1)
@@ -539,13 +565,13 @@ int main (int argc, char **argv)
    fprintf (stderr, "%s: %s: %s", progname, target, strerror(ENOTDIR));
    return 1;
   }
-  
  }
  
  r=0;
  for (t=optind; t<argc; t++)
  {
-  while ((argv[t])[strlen(argv[t])-1]=='/') (argv[t])[strlen(argv[t])-1]=0;
+  while ((argv[t])[strlen(argv[t])-1]=='/')
+   (argv[t])[strlen(argv[t])-1]=0;
   e=special_mv(argv[t], target);
   if (r<e) r=e;
  }

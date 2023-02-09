@@ -40,11 +40,6 @@
  exit 1
 }
 
-[ "`basename "\`pwd\`"`" = "micrux" ] || {
- echo "Cowardly refusing to run outside my tree."
- exit 1
-}
-
 UNAME="`uname -s`"
 [ "$UNAME" != Linux -a "$UNAME" != "OpenBSD" -a "$UNAME" != "NetBSD" -a "$UNAME" != "FreeBSD" ] && {
  echo "I don't know this OS, edit this script or try build5.sh"
@@ -113,6 +108,7 @@ $CC -o ../bin/mesg mesg.c
 [ "$UNAME" = Linux ] && $CC -I../support -o ../bin/mkfifo mkfifo.c ../support/setmode.c
 [ "$UNAME" = Linux ] || $CC -o ../bin/mkfifo mkfifo.c
 $CC -o ../bin/mknod mknod.c
+$CC -o ../bin/mv mv.c
 $CC -o ../bin/newer newer.c
 $CC -o ../bin/news news.c
 $CC -o ../bin/nice nice.c
