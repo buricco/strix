@@ -80,8 +80,10 @@ $CC -o ../bin/cmp cmp.c
 $CC -o ../bin/comm comm.c
 $CC -o ../bin/date date.c
 $CC -o ../bin/dd dd.c
-$CC -o ../bin/du du.c
 $CC -o ../bin/dircmp dircmp.c
+$CC -o ../bin/dispgid dispgid.c
+$CC -o ../bin/dispuid dispuid.c
+$CC -o ../bin/du du.c
 $CC -o ../bin/echo echo.c
 $CC -o ../bin/env env.c
 $CC -o ../bin/factor factor.c

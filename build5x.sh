@@ -79,6 +79,8 @@ $CC -D__SVR4__ -I../support -o ../bin/comm comm.c ../support/getline.c
 $CC -D__SVR4__ -o ../bin/date date.c
 $CC -D__SVR4__ -o ../bin/dd dd.c
 $CC -D__SVR4__ -o ../bin/dircmp dircmp.c
+$CC -D__SVR4__ -o ../bin/dispgid dispgid.c
+$CC -D__SVR4__ -o ../bin/dispuid dispuid.c
 $CC -D__SVR4__ -o ../bin/du du.c
 $CC -D__SVR4__ -o ../bin/echo echo.c
 $CC -D__SVR4__ -o ../bin/env env.c

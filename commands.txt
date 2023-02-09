@@ -16,6 +16,8 @@ date
 dd
 dircmp
 dirname (basename)
+dispgid
+dispuid
 domainname (uname)
 du
 echo
