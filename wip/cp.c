@@ -25,11 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * This program is currently unusable.
- * It is merely a framework upon which to build the cp(1) utility.
- * Most of the needed code is probably in mv.
- */
+/* This program is currently untested. */
 
 #define _XOPEN_SOURCE 500
 #define _DEFAULT_SOURCE
@@ -54,17 +50,22 @@ static char *copyright="@(#) (C) Copyright 2023 S. V. Nickolas\n";
 
 static char *progname;
 
-#define MODE_H 0x01 /* Resolve symlinks explicitly specified */
-#define MODE_L 0x02 /* Resolve all symlinks                  */
-#define MODE_R 0x04 /* Recurse into folders                  */
-#define MODE_F 0x08 /* Force overwrite                       */
-#define MODE_I 0x10 /* Prompt on overwrite                   */
-#define MODE_N 0x20 /* Silently refuse to overwrite          */
-#define MODE_P 0x40 /* Preserve more attributes when copying */
-#define MODE_V 0x80 /* Verbose                               */
-int mode;
+                     /*****************************************/
+#define MODE_H  0x01 /* Resolve symlinks explicitly specified */
+#define MODE_L  0x02 /* Resolve all symlinks                  */
+#define MODE_R  0x04 /* Recurse into folders                  */
+#define MODE_F  0x08 /* Force overwrite                       */
+#define MODE_I  0x10 /* Prompt on overwrite                   */
+#define MODE_N  0x20 /* Silently refuse to overwrite          */
+#define MODE_P  0x40 /* Preserve more attributes when copying */
+#define MODE_V  0x80 /* Verbose                               */
+int mode;            /*****************************************/
 
 struct stat statbuf;
+
+int global_e;
+
+char *ref_in, *ref_out;
 
 void xperror (const char *filename)
 {
@@ -343,6 +344,58 @@ int smart_cp (char *from, char *to)
  return 1;
 }
 
+int iterate_hit (const char *filename, const struct stat *statptr, 
+                 int fileflags, struct FTW *pftw)
+{
+ int e;
+ char *p;
+ char mkfn[PATH_MAX];
+ 
+ /* Create target filename */
+ p=(char *)(filename+strlen(ref_in)+1);
+ if ((strlen(ref_in)+strlen(p)+2)>PATH_MAX)
+ {
+  global_e=1;
+  fprintf (stderr, "%s: %s: target filename would be too long\n", 
+           progname, filename);
+  return 0;
+ }
+ 
+ while (ref_out[strlen(ref_out)-1]=='/')
+  ref_out[strlen(ref_out)-1]=0;
+ 
+ sprintf (mkfn, "%s/%s", ref_out, p);
+
+ switch (fileflags)
+ {
+  case FTW_SLN: /* Broken symlink: scream but do not die */
+   global_e=1;
+   fprintf (stderr, "%s: %s: not copying broken symlink\n", 
+            progname, filename);
+   return 0;
+  case FTW_SL: /* Working symlink: clone it, then zot */
+   memset(mkln, 0, PATH_MAX);
+   if (readlink(filename, mkln, PATH_MAX)==-1)
+   {
+    xperror(filename);
+    global_e=1;
+    return 0;
+   }
+   if (symlink(mkln, mkfn))
+   {
+    xperror(mkfn);
+    global_e=1;
+    return 0;
+   }
+   if (verbose)
+    printf ("cloned %s -> %s\n", filename, mkfn);
+ }
+ 
+ e=smart_cp(filename, mkfn);
+ if (global_e<e) global_e=e;
+ return 0;
+}
+
 int do_cp (char *from, char *to)
 {
  int e;
@@ -375,11 +428,21 @@ int do_cp (char *from, char *to)
   return e;
  }
  
+ /*
+  * Folder.
+  * If in recursive mode, then iterate, either following or not following
+  * links as requested by the user.  Otherwise, scream and mark a non-fatal
+  * error condition.
+  */
  if ((statbuf.st_mode & S_IFMT) == S_IFDIR)
  {
   if (mode&MODE_R)
   {
-   /* XXX */
+   ref_in=from;
+   ref_out=outfn;
+   global_e=0;
+   nftw(from, iterate_hit, ITERATE_MAX_HANDLES, (mode&MODE_P)?FTW_PHYS:0);
+   return global_e;
   }
   else
   {
@@ -404,6 +467,7 @@ int main (int argc, char **argv)
  progname=strrchr(argv[0], '/');
  if (progname) progname++; else progname=argv[0];
 
+ /* The -r and -n switches are intentionally left undocumented. */
  while (-1!=(e=getopt(argc, argv, "HLPRfinprv")))
  {
   switch (e)
