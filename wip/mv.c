@@ -27,7 +27,6 @@
 
 /*
  * This code is not fully tested.
- * Moving single files across devices does not currently work.
  * 
  * Note: Timestamps are not preserved for directories, symlinks or special
  *       files when moving across devices.
@@ -465,6 +464,10 @@ int special_mv (char *from, char *to)
   return 1;
  }
 
+ /* Not a directory: copy and delete one file. */
+ if ((statbuf.st_mode & S_IFMT) != S_IFDIR)
+  return cpmv(from, outfn);
+
  ref_in=from;
  ref_out=outfn;
  global_e=0;
@@ -498,7 +501,7 @@ int main (int argc, char **argv)
  else
   mode=MODE_F;
  
- verbose=1;
+ verbose=0;
  while (-1!=(e=getopt(argc, argv, "fiv")))
  {
   switch (e)
@@ -531,7 +534,7 @@ int main (int argc, char **argv)
    xperror(target);
    return 1;
   }
-  if (!(statbuf.st_mode&S_IFDIR))
+  if ((statbuf.st_mode & S_IFMT) != S_IFDIR)
   {
    fprintf (stderr, "%s: %s: %s", progname, target, strerror(ENOTDIR));
    return 1;
