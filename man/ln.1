@@ -1,0 +1,76 @@
+.\" (C) Copyright 2023 S. V. Nickolas.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions are
+.\" met:
+.\"
+.\"   1. Redistributions of source code must retain the above copyright
+.\"      notice, this list of conditions and the following disclaimer.
+.\"   2. Redistributions in binary form must reproduce the above copyright
+.\"      notice, this list of conditions and the following disclaimer in the
+.\"      documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS "AS IS" AND ANY
+.\" EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+.\" WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+.\" DISCLAIMED.
+.\"
+.\" IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+.\" INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+.\" (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+.\" SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+.\" STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+.\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.Dd January 29, 2023
+.Dt LN 1
+.Os
+.Sh NAME
+.Nm ln
+.Nd create links
+.Sh SYNOPSIS
+.Nm
+.Op Fl LPfs
+.Ar source ...
+.Ar target
+.Sh DESCRIPTION
+The
+.Nm
+command creates hard or soft (symbolic) links to existing files.
+.Ar target
+may (and if more than one
+.Ar source
+is specified, must) be a directory, in which case the links will bear the same
+filenames.
+.Pp
+The following options are supported:
+.Pp
+.Bl -tag -width -indent
+.It Fl L
+If 
+.Ar source
+is a symbolic link, create a link to its target.
+.It Fl P
+If 
+.Ar source
+is a symbolic link, create a link to the link.
+.It Fl f
+Erase existing files before creating new links.
+.It Fl s
+Create soft links.  By default,
+.Nm
+creates hard links.
+.El
+.Sh BUGS
+.Fl L
+and
+.Fl P
+are ignored on systems strictly compatible with
+.At V .
+.Sh HISTORY
+A 
+.Nm
+command appeared in 
+.At v6 .
+This implementation has been entirely rewritten.

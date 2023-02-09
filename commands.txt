@@ -1,0 +1,83 @@
+arch (uname)
+asa
+banner
+basename
+cal
+cat
+chgrp (chown)
+chmod
+chown
+chroot
+chvt
+cksum
+cmp
+comm
+date
+dd
+dircmp
+dirname (basename)
+domainname (uname)
+du
+echo
+egrep (grep)
+env
+factor
+false
+fgrep (grep)
+fmtmsg
+fold
+getopt
+grep
+groups (id)
+head
+hostname (uname)
+id
+ipcrm
+ipcs
+kill
+killall
+line
+link
+ln
+logname
+makekey
+mesg
+mkdir
+mkfifo
+mknod
+mvdir
+newer
+news
+nice
+nohup
+nologin
+pgrep
+pkill (pgrep)
+printenv (env)
+pwd
+random
+readlink
+realpath
+renice
+rm
+rmdir
+setpgrp
+sleep
+split
+sum (cksum)
+sync
+tac
+tail
+tee
+test
+time
+touch
+true
+tty
+uname
+unlink
+wc
+which
+who
+whoami (id)
+yes

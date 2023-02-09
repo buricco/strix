@@ -1,0 +1,7 @@
+"Why code your own Unix clone utilities when BSD exists?  Especially since you
+are using the same license."
+
+There are three major flavors of userland in the *x world:  BSD, SysV and GNU.
+I wanted an implementation of SysV that was as free as BSD.
+
+Also I learn by doing.
