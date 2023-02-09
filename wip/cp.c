@@ -26,28 +26,48 @@
  */
 
 /*
- * This is not a complete implementation of cp(1) - it only copies ONE file
- * from source to target, doesn't recognize that it might be a path, won't
- * prompt for overwrite, anything.  It's just the rib cage.
- * 
- * mv(1) also needs this functionality.  BSD's mv (since Reno) will use an
- * internal file copier to handle single files across devices but will shell
- * out to cp and rm to handle trees - I don't think this is wise.  Rather,
- * my preferred approach is to integrate cp and mv into a single utility which
- * uses the same exact code to handle copying trees.
+ * This program is currently unusable.
+ * It is merely a framework upon which to build the cp(1) utility.
+ * Most of the needed code is probably in mv.
  */
 
+#define _XOPEN_SOURCE 500
+#define _DEFAULT_SOURCE
 #include <sys/stat.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+#include <ftw.h>
+
+#define ITERATE_MAX_HANDLES 5
+
+#ifdef __SVR4__
+#define CP_OLD_UTIME
+#endif
+
+static char *copyright="@(#) (C) Copyright 2023 S. V. Nickolas\n";
 
 static char *progname;
 
-void xperror (char *filename)
+#define MODE_H 0x0001
+#define MODE_L 0x0002
+#define MODE_P 0x0004
+#define MODE_R 0x0008
+#define MODE_f 0x0010
+#define MODE_i 0x0020
+#define MODE_n 0x0040
+#define MODE_p 0x0080
+#define MODE_v 0x0100
+int mode;
+
+struct stat statbuf;
+
+void xperror (const char *filename)
 {
  fprintf (stderr, "%s: %s: %s\n", progname, filename, strerror(errno));
 }
@@ -198,16 +218,103 @@ int copyfile (char *from, char *to, int attr)
  return r;
 }
 
-/* Test routine */
+int do_cp (char *from, char *to)
+{
+}
+
+void usage (void)
+{
+ fprintf (stderr, "%s: usage: %s [-HLPRafipv] source ... target\n", 
+          progname, progname);
+ exit(1);
+}
+
 int main (int argc, char **argv)
 {
+ char *target;
+ int e, r, t;
+ 
  progname=strrchr(argv[0], '/');
  if (progname) progname++; else progname=argv[0];
 
- if (argc!=3)
+ while (-1!=(e=getopt(argc, argv, "HLPRfinprv")))
  {
-  fprintf (stderr, "%s: usage: %s source target\n", progname, progname);
-  return 2;
+  switch (e)
+  {
+   case 'H':
+    mode &= ~(MODE_L|MODE_P);
+    mode |= MODE_H;
+    break;
+   case 'L':
+    mode &= ~(MODE_H|MODE_P);
+    mode |= MODE_L;
+    break;
+   case 'P':
+    mode &= ~(MODE_H|MODE_L);
+    mode |= MODE_P;
+    break;
+   case 'R': /* FALL THROUGH */
+   case 'r':
+    mode |= MODE_R;
+    break;
+   case 'f':
+    mode &= ~(MODE_i|MODE_n);
+    mode |= MODE_f;
+    break;
+   case 'i':
+    mode &= ~(MODE_f|MODE_n);
+    mode |= MODE_i;
+    break;
+   case 'n':
+    mode &= ~(MODE_f|MODE_i);
+    mode |= MODE_n;
+    break;
+   case 'p':
+    mode |= MODE_p;
+    break;
+   case 'v':
+    mode |= MODE_v;
+    break;
+   case 'a': /* -a = -RpP */
+    mode |= (MODE_R|MODE_P|MODE_p);
+    mode &= ~(MODE_L|MODE_H);
+    break;
+   default:
+    usage();
+  }
  }
- return copyfile(argv[1], argv[2], 1);
+ 
+ /* Definitely missing a target path */
+ if (argc-optind<2) usage();
+ 
+ /* Take the last argument, then strip it off. */
+ target=argv[--argc];
+ while (target[strlen(target)-1]=='/')
+  target[strlen(target)-1]=0;
+ 
+ /* More than 1 source parameter: target must exist and be a directory. */
+ if (argc-optind>1)
+ {
+  if (stat(target, &statbuf))
+  {
+   xperror(target);
+   return 1;
+  }
+  if ((statbuf.st_mode & S_IFMT) != S_IFDIR)
+  {
+   fprintf (stderr, "%s: %s: %s", progname, target, strerror(ENOTDIR));
+   return 1;
+  }
+ }
+ 
+ r=0;
+ for (t=optind; t<argc; t++)
+ {
+  while ((argv[t])[strlen(argv[t])-1]=='/')
+   (argv[t])[strlen(argv[t])-1]=0;
+  e=do_cp(argv[t], target);
+  if (r<e) r=e;
+ }
+ 
+ return r;
 }
