@@ -310,7 +310,7 @@ int cpmv (char *from, char *to)
 int ckzot (char *fn)
 {
  /* If we can't lstat() the file, there's probably nothing to clobber. */
- if (!lstat(fn, &statbuf))
+ if (lstat(fn, &statbuf))
   return 0;
  
  if (mode==MODE_N) /* No clobber (GNU, FreeBSD) */

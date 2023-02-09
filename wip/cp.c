@@ -25,7 +25,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* This program is currently untested. */
+/*
+ * This program is currently untested regarding recursive or folder copying.
+ * Basic file copying is tested and works.
+ */
 
 #define _XOPEN_SOURCE 500
 #define _DEFAULT_SOURCE
@@ -228,7 +231,7 @@ int copyfile (char *from, char *to)
 int ckzot (char *fn)
 {
  /* If we can't lstat() the file, there's probably nothing to clobber. */
- if (!lstat(fn, &statbuf))
+ if (lstat(fn, &statbuf))
   return 0;
  
  if (mode&MODE_N) /* No clobber (GNU, FreeBSD) */
@@ -455,6 +458,34 @@ int do_cp (char *from, char *to)
   {
    fprintf (stderr, "%s: %s: skipping directory\n", from);
    return 1;
+  }
+ }
+ 
+ /*
+  * File.
+  * If target is folder, copy the basename over first.
+  */
+ if (!stat(to, &statbuf))
+ {
+  if ((statbuf.st_mode & S_IFMT) == S_IFDIR)
+  {
+   char *mkfn, *base;
+   
+   if (0!=(base=strrchr(from, '/'))) base++; else base=from;
+   
+   if ((strlen(to)+strlen(base)+2)>PATH_MAX)
+   {
+    fprintf (stderr, "%s: %s: target filename would be too long\n", 
+             progname, to);
+    return 1;
+   }
+   
+   mkfn=malloc(PATH_MAX);
+   if (!mkfn) scram();
+   sprintf (mkfn, "%s/%s", to, base);
+   e=smart_cp(from, mkfn);
+   free(mkfn);
+   return e;
   }
  }
  
