@@ -102,29 +102,37 @@ int main (int argc, char **argv)
      switch (*i)
      {
       case '\\':
-       buf[strlen(buf)]=='\\';
-       break;
+       buf[strlen(buf)]='\\';
+       i++;
+       continue;
       case 'a':
-       buf[strlen(buf)]=='\a';
-       break;
+       buf[strlen(buf)]='\a';
+       i++;
+       continue;
       case 'b':
-       buf[strlen(buf)]=='\b';
-       break;
+       buf[strlen(buf)]='\b';
+       i++;
+       continue;
       case 'f':
-       buf[strlen(buf)]=='\f';
-       break;
+       buf[strlen(buf)]='\f';
+       i++;
+       continue;
       case 'n':
-       buf[strlen(buf)]=='\n';
-       break;
+       buf[strlen(buf)]='\n';
+       i++;
+       continue;
       case 'r':
-       buf[strlen(buf)]=='\r';
-       break;
+       buf[strlen(buf)]='\r';
+       i++;
+       continue;
       case 't':
-       buf[strlen(buf)]=='\t';
-       break;
+       buf[strlen(buf)]='\t';
+       i++;
+       continue;
       case 'v':
-       buf[strlen(buf)]=='\v';
-       break;
+       buf[strlen(buf)]='\v';
+       i++;
+       continue;
       default:
        /*
         * Also sprach Posix: "The interpretation of a <backslash> followed by
@@ -133,7 +141,6 @@ int main (int argc, char **argv)
         * My interpretation: Spew it untouched.
         */
        memcpy(&(buf[strlen(buf)]), i-1, 2);
-       break;
      }
      i++;
      continue;
@@ -194,7 +201,8 @@ int main (int argc, char **argv)
       case 't':
       case 'z':
       case 'L':
-       break;
+       i++;
+       continue;
       case 'b':
        /*
         * Also sprach Posix: "An additional conversion specifier character, b,
@@ -216,16 +224,18 @@ int main (int argc, char **argv)
         }
        }
        state=STATE_NORMAL;
-       break;
+       continue;
       case 'c':
-       sprintf (&(buf[strlen(buf)]), "%c", (t<argc)?argv[t++]:0);
+       sprintf (&(buf[strlen(buf)]), "%c", (t<argc)?argv[t++][0]:0);
        state=STATE_NORMAL;
-       break;
+       i++;
+       continue;
       case 'n':
        strcat(fbuf, "d");
        sprintf (&(buf[strlen(buf)]), fbuf, strlen(buf));
        state=STATE_NORMAL;
-       break;
+       i++;
+       continue;
       case 'd':
       case 'i': /* do people actually use %i instead of %d? */
       case 'o':
@@ -233,20 +243,20 @@ int main (int argc, char **argv)
       case 'u':
       case 'x':
       case 'X':
-       fbuf[strlen(fbuf)]=*i;
        errno=0;
        sprintf (&(buf[strlen(buf)]), fbuf, (t<argc)?strtol(argv[t], 0, 0):0);
        if (errno)
         fprintf (stderr, "%s: bogus numeric value '%s'\n", progname, argv[t]);
        t++;
        state=STATE_NORMAL;
-       break;
+       i++;
+       continue;
       case 's':
-       fbuf[strlen(fbuf)]=*i;
        sprintf (&(buf[strlen(buf)]), fbuf, (t<argc)?argv[t]:0);
        t++;
        state=STATE_NORMAL;
-       break;
+       i++;
+       continue;
        
       /* we don't support "wide chars" or "long strings" */
       case 'C':
@@ -267,6 +277,7 @@ int main (int argc, char **argv)
   
   fwrite(buf, 1, strlen(buf), stdout);
   if (argc<=t) break;
+  t++;
  }
  
  return 0;
