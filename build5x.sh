@@ -112,6 +112,7 @@ $CC -D__SVR4__ -o ../bin/pwd pwd.c
 $CC -D__SVR4__ -o ../bin/random random.c
 $CC -D__SVR4__ -o ../bin/readlink readlink.c
 $CC -D__SVR4__ -o ../bin/realpath realpath.c
+$CC -D__SVR4__ -o ../bin/rename rename.c
 $CC -D__SVR4__ -o ../bin/renice renice.c -lucb
 $CC -D__SVR4__ -o ../bin/rm rm.c
 $CC -D__SVR4__ -o ../bin/rmdir rmdir.c

@@ -120,6 +120,7 @@ $CC -o ../bin/pwd pwd.c
 $CC -o ../bin/random random.c
 $CC -o ../bin/readlink readlink.c
 $CC -o ../bin/realpath realpath.c
+$CC -o ../bin/rename rename.c
 $CC -o ../bin/renice renice.c
 $CC -o ../bin/rm rm.c
 $CC -o ../bin/rmdir rmdir.c

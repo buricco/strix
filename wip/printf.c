@@ -65,11 +65,12 @@ int main (int argc, char **argv)
   return 1;
  }
  
- i=argv[1];
  t=2;
  
  while (1)
  {
+  i=argv[1];
+  
   while (*i)
   {
    switch (state)
