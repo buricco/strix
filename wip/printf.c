@@ -25,8 +25,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* This code is very buggy and "%b" is unimplemented. */
-
 /* Extension beyond Posix, octal values do not need to start with 0. */
 
 #include <errno.h>
@@ -212,7 +210,7 @@ int main (int argc, char **argv)
         * 
         * It also specifies that '\c' should serve as a force terminator.
         * 
-        * This code is unfinished.
+        * Octal escape is not yet supported.
         */
        if (t<=argc)
        {
@@ -221,10 +219,56 @@ int main (int argc, char **argv)
         state2=STATE_NORMAL;
         while (*j)
         {
-         j++;
+         if (*j=='\\')
+         {
+          j++;
+          switch (*j)
+          {
+           case 'c': /* Stop parsing immediately, write what we have, die. */
+            fwrite(buf, 1, strlen(buf), stdout);
+            exit(0);
+           case '\\':
+            buf[strlen(buf)]='\\';
+            j++;
+            continue;
+           case 'a':
+            buf[strlen(buf)]='\a';
+            j++;
+            continue;
+           case 'b':
+            buf[strlen(buf)]='\b';
+            j++;
+            continue;
+           case 'f':
+            buf[strlen(buf)]='\f';
+            j++;
+            continue;
+           case 'n':
+            buf[strlen(buf)]='\n';
+            j++;
+            continue;
+           case 'r':
+            buf[strlen(buf)]='\r';
+            j++;
+            continue;
+           case 't':
+            buf[strlen(buf)]='\t';
+            j++;
+            continue;
+           case 'v':
+            buf[strlen(buf)]='\v';
+            j++;
+            continue;
+           default:
+            buf[strlen(buf)]='\\';
+            /* FALL OUT */
+          }
+         }
+         buf[strlen(buf)]=*(j++);
         }
        }
        state=STATE_NORMAL;
+       i++;
        continue;
       case 'c':
        sprintf (&(buf[strlen(buf)]), "%c", (t<argc)?argv[t++][0]:0);
@@ -253,8 +297,8 @@ int main (int argc, char **argv)
        i++;
        continue;
       case 's':
-       sprintf (&(buf[strlen(buf)]), fbuf, (t<argc)?argv[t]:0);
-       t++;
+       j=buf+strlen(buf);
+       if (t<argc) sprintf (j, fbuf, argv[t++]);
        state=STATE_NORMAL;
        i++;
        continue;
@@ -276,10 +320,9 @@ int main (int argc, char **argv)
    return 1;
   }
   
-  fwrite(buf, 1, strlen(buf), stdout);
-  if (argc<=t) break;
-  t++;
+  if (!(t<argc)) break;
  }
+ fwrite(buf, 1, strlen(buf), stdout);
  
  return 0;
 }
