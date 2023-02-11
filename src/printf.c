@@ -26,10 +26,13 @@
  */
 
 /*
- * Buffer sizes are intentionally excessive.
- * Extension beyond Posix, octal values do not need to start with 0.
+ * Notes:
+ * 
+ * Posix requires octal escapes to start \0.  We don't; \1, \2, \3, \4, \5, \6
+ * and \7 are also fine (as is a cat) but \8 and \9, obviously, aren't.
+ * 
  * Floating point is NOT supported.  Also sprach Posix: It would be nice, but
- *   it is not required, just recommended.
+ * it is not required, just recommended.
  */
 
 #include <errno.h>
@@ -45,10 +48,18 @@ int main (int argc, char **argv)
 {
  int t;
  int o;
+ int got;
  char *i, *j;
- char buf[BUFSIZ];
- char fbuf[BUFSIZ];
- char bbuf[BUFSIZ];
+ 
+ /* Buffer sizes are intentionally excessive. */
+ char buf[BUFSIZ];  /* Main buffer   */
+ char fbuf[BUFSIZ]; /* Format buffer */
+ char bbuf[BUFSIZ]; /* %b buffer     */
+
+ /*
+  * state uses all these modes.  state2 (used by %b) only uses NORMAL and
+  * OCTAL (with BACKSLASH handled immediately).
+  */
  enum
  {
   STATE_NORMAL,
@@ -57,20 +68,40 @@ int main (int argc, char **argv)
   STATE_OCTAL
  } state, state2;
  
+ /* Get the basename of the command. */
  progname=strrchr(argv[0], '/');
  if (progname) progname++; else progname=argv[0];
 
+ /* 
+  * Zot out the buffer (forcing it to be null-terminated), and set the state
+  * machine to its default mode.
+  */
  memset(buf, 0, BUFSIZ);
  state=STATE_NORMAL;
  
+ /*
+  * Mark if we get any % signs, because otherwise, if there are further
+  * parameters on the command line, we'll loop.
+  */
+ got=0;
+ 
+ /* No args: die screaming with usage diagnostic. */
  if (argc==1)
  {
   fprintf (stderr, "%s: usage: %s format [args ...]\n", progname, progname);
   return 1;
  }
  
+ /* Argument pointer starts at 2, because 1 is the format string. */
  t=2;
  
+ /*
+  * Loop until we're out of arguments.  But if there aren't any escapes that
+  * require reading arguments, ignore the arguments.
+  * 
+  * If we run out of arguments before we run out of such escapes, replace any
+  * further numeric values with 0 and strings with "".
+  */
  while (1)
  {
   i=argv[1];
@@ -80,15 +111,16 @@ int main (int argc, char **argv)
    switch (state)
    {
     case STATE_NORMAL:
-     if (*i=='%')
+     if (*i=='%') /* Percent escape, to take a parameter */
      {
+      got=1;
       i++;
       state=STATE_PERCENT;
       memset(fbuf, 0, BUFSIZ);
       *fbuf='%';
       continue;
      }
-     if (*i=='\\')
+     if (*i=='\\') /* Backslash escape */
      {
       i++;
       state=STATE_BACKSLASH;
@@ -97,13 +129,22 @@ int main (int argc, char **argv)
      buf[strlen(buf)]=*i++;
      break;
     case STATE_BACKSLASH:
-     if ((*i>='0')&&(*i<='7'))
+     if ((*i>='0')&&(*i<='7')) /* Octal escape */
      {
       o=*(i++)-'0';
       state=STATE_OCTAL;
       continue;
      }
      state=STATE_NORMAL;
+     
+     /*
+      * All of these are handled by the C compiler.
+      * This comment will not be repeated for its second usage in \b.
+      *   \\ = literal backslash    \n = newline
+      *   \a = alert (beep)         \r = carriage return
+      *   \b = backspace            \t = horizontal tab
+      *   \f = form feed            \v = vertical tab
+      */
      switch (*i)
      {
       case '\\':
@@ -149,10 +190,10 @@ int main (int argc, char **argv)
      }
      i++;
      continue;
-    case STATE_OCTAL:
+    case STATE_OCTAL: /* Keep gathering up an octal code */
      if ((*i>='0')&&(*i<='7'))
      {
-      if (((o<<3)|(*i-'0'))<0xFF)
+      if (((o<<3)|(*i-'0'))<=0xFF) /* Doesn't overflow a byte, add it */
       {
        o<<=3;
        o|=(*i-'0');
@@ -177,7 +218,7 @@ int main (int argc, char **argv)
       * My interpretation: Die screaming.
       */
      
-     /* % - literal percent sign */
+     /* %% - literal percent sign */
      if (*i=='%')
      {
       buf[strlen(buf)]='%';
@@ -187,25 +228,16 @@ int main (int argc, char **argv)
      fbuf[strlen(fbuf)]=*i;
      switch (*i)
      {
-      case '+':
-      case '-':
-      case '.':
-      case '0':
-      case '1':
-      case '2':
-      case '3':
-      case '4':
-      case '5':
-      case '6':
-      case '7':
-      case '8':
-      case '9':
-      case 'h':
-      case 'j':
-      case 'l':
-      case 't':
-      case 'z':
-      case 'L':
+      /*
+       * Format modifiers.
+       * If they form an invalid combo, let sprintf(3) take care of that and
+       * the chips will fall where they may...
+       */
+      case '+':  case '-':  case '.':  case '0':
+      case '1':  case '2':  case '3':  case '4':
+      case '5':  case '6':  case '7':  case '8':
+      case '9':  case 'h':  case 'j':  case 'l':
+      case 't':  case 'z':  case 'L':
        i++;
        continue;
       case 'b':
@@ -215,14 +247,30 @@ int main (int argc, char **argv)
         * string that can contain <backslash>-escape sequences."
         * 
         * It also specifies that '\c' should serve as a force terminator.
+        * 
+        * Parsing the result further as a %s string is the norm for GNU and
+        * FreeBSD implementations (4.4BSD and SVR4 don't know %b yet) plus the
+        * versions in bash and the Almquist, Korn and Watanabe shells.
         */
        if (t<=argc)
        {
         int o;
         
+        /* Clear the %b buffer and set defaults. */
         memset(bbuf, 0, BUFSIZ);
-        j=argv[t++];
+        
+        if (t<argc) 
+         j=argv[t++];
+        else
+         j="";
+        
         state2=STATE_NORMAL;
+        
+        /*
+         * Iterate over the matched argument.
+         * Relevant comments above regarding backslash and octal escapes also
+         * apply here.
+         */
         while (*j)
         {
          if (state2==STATE_OCTAL)
@@ -239,12 +287,17 @@ int main (int argc, char **argv)
           }
           bbuf[strlen(buf)]=o;
           state2=STATE_NORMAL;
+          /* Do not increment j; go back and rescan it. */
+          continue;
          }
          if (*j=='\\')
          {
           j++;
           switch (*j)
           {
+           case 0: /* Oops, ran over the edge. */
+            strcat(bbuf, "\\");
+            continue; /* Let the loop take care of it. */
            case '0':
            case '1':
            case '2':
@@ -301,31 +354,39 @@ int main (int argc, char **argv)
          }
          bbuf[strlen(bbuf)]=*(j++);
         }
-        fbuf[strlen(fbuf)-1]='s';
+        fbuf[strlen(fbuf)-1]='s'; /* so modifiers work */
         sprintf (buf+strlen(buf), fbuf, bbuf);
        }
        state=STATE_NORMAL;
        i++;
        continue;
-      case 'c':
-       sprintf (&(buf[strlen(buf)]), "%c", (t<argc)?argv[t++][0]:0);
+      case 'C': /* Wide char; we don't support so just use regular char */
+      case 'c': /* Char */
+       fbuf[strlen(fbuf)-1]='c';
+       sprintf (&(buf[strlen(buf)]), fbuf, (t<argc)?argv[t++][0]:0);
        state=STATE_NORMAL;
        i++;
        continue;
-      case 'n':
-       strcat(fbuf, "d");
+      case 'n': /* Number of chars "output" so far. */
+       fbuf[strlen(fbuf)-1]='d';
        sprintf (&(buf[strlen(buf)]), fbuf, strlen(buf));
        state=STATE_NORMAL;
        i++;
        continue;
-      case 'd':
-      case 'i': /* do people actually use %i instead of %d? */
-      case 'o':
-      case 'p': /* really, now? */
-      case 'u':
-      case 'x':
-      case 'X':
+      case 'd': /* Decimal */
+      case 'i': /* Do people actually use %i instead of %d? */
+      case 'o': /* Octal */
+      case 'p': /* Really, now? (Pointer) */
+      case 'u': /* Unsigned */
+      case 'x': /* Hex */
+      case 'X': /* Hex, uppercase */
        errno=0;
+       /*
+        * In this mode, strtol() handles octals and hex values for us, so we
+        * don't have to worry about that.
+        * 
+        * Also sprach Posix: If we're out of parameters, fill in with 0.
+        */
        sprintf (&(buf[strlen(buf)]), fbuf, (t<argc)?strtol(argv[t], 0, 0):0);
        if (errno)
         fprintf (stderr, "%s: bogus numeric value '%s'\n", progname, argv[t]);
@@ -333,21 +394,25 @@ int main (int argc, char **argv)
        state=STATE_NORMAL;
        i++;
        continue;
-      case 's':
-       j=buf+strlen(buf);
-       if (t<argc) sprintf (j, fbuf, argv[t++]);
+      case 'S': /* Wide string; we don't support so just use regular string */
+      case 's': /* String */
+       fbuf[strlen(fbuf)-1]='s';
+       sprintf (&(buf[strlen(buf)]), fbuf, (t<argc)?argv[t++]:"");
        state=STATE_NORMAL;
        i++;
        continue;
-       
-      /* we don't support "wide chars" or "long strings" */
-      case 'C':
-      case 'S':
-       state=STATE_NORMAL;
      }
      i++;
    }
   }
+  
+  /*
+   * So, we've hit the end of the format string.
+   * 
+   * What to do if we hit the end before we finish parsing?  If it's an octal
+   * escape, that's fine; the null terminator is our end marker.  Otherwise,
+   * die screaming; the format string is malformed.
+   */
   if (state==STATE_OCTAL)
    buf[strlen(buf)]=o;
   else if (state!=STATE_NORMAL)
@@ -357,9 +422,15 @@ int main (int argc, char **argv)
    return 1;
   }
   
-  if (!(t<argc)) break;
+  /*
+   * Either we don't have anything that needs argument parsing, or we've hit
+   * the end of our argument list, so we're done.  (Otherwise, reset the index
+   * so we can go back, Jack, and do it again.)
+   */
+  if (!((t<argc)&&got)) break;
  }
- fwrite(buf, 1, strlen(buf), stdout);
  
+ /* Dump the buffer and run. */
+ fwrite(buf, 1, strlen(buf), stdout);
  return 0;
 }
