@@ -116,6 +116,7 @@ $CC -o ../bin/news news.c
 $CC -o ../bin/nice nice.c
 $CC -o ../bin/nohup nohup.c
 [ "$UNAME" = Linux ] && $CC -I../support -o ../bin/pgrep pgrep.c ../support/signames.c
+$CC -o ../bin/printf printf.c
 $CC -o ../bin/pwd pwd.c
 $CC -o ../bin/random random.c
 $CC -o ../bin/readlink readlink.c

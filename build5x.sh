@@ -108,6 +108,7 @@ $CC -D__SVR4__ -o ../bin/newer newer.c
 $CC -D__SVR4__ -o ../bin/news news.c
 $CC -D__SVR4__ -o ../bin/nice nice.c
 $CC -D__SVR4__ -o ../bin/nohup nohup.c
+$CC -D__SVR4__ -o ../bin/printf printf.c
 $CC -D__SVR4__ -o ../bin/pwd pwd.c
 $CC -D__SVR4__ -o ../bin/random random.c
 $CC -D__SVR4__ -o ../bin/readlink readlink.c

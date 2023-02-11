@@ -57,6 +57,7 @@ nologin
 pgrep
 pkill (pgrep)
 printenv (env)
+printf
 pwd
 random
 readlink

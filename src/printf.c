@@ -25,7 +25,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* Extension beyond Posix, octal values do not need to start with 0. */
+/*
+ * Buffer sizes are intentionally excessive.
+ * Extension beyond Posix, octal values do not need to start with 0.
+ * Floating point is NOT supported.  Also sprach Posix: It would be nice, but
+ *   it is not required, just recommended.
+ */
 
 #include <errno.h>
 #include <stdio.h>
@@ -43,6 +48,7 @@ int main (int argc, char **argv)
  char *i, *j;
  char buf[BUFSIZ];
  char fbuf[BUFSIZ];
+ char bbuf[BUFSIZ];
  enum
  {
   STATE_NORMAL,
@@ -209,63 +215,94 @@ int main (int argc, char **argv)
         * string that can contain <backslash>-escape sequences."
         * 
         * It also specifies that '\c' should serve as a force terminator.
-        * 
-        * Octal escape is not yet supported.
         */
        if (t<=argc)
        {
-        j=argv[t++];
+        int o;
         
+        memset(bbuf, 0, BUFSIZ);
+        j=argv[t++];
         state2=STATE_NORMAL;
         while (*j)
         {
+         if (state2==STATE_OCTAL)
+         {
+          if ((*j>='0')&&(*j<='7'))
+          {
+           if (((o<<3)|(*j-'0'))<=0xFF)
+           {
+            o<<=3;
+            o|=(*j-'0');
+            j++;
+            continue;
+           }
+          }
+          bbuf[strlen(buf)]=o;
+          state2=STATE_NORMAL;
+         }
          if (*j=='\\')
          {
           j++;
           switch (*j)
           {
+           case '0':
+           case '1':
+           case '2':
+           case '3':
+           case '4':
+           case '5':
+           case '6':
+           case '7':
+            state2=STATE_OCTAL;
+            o=*j-'0';
+            j++;
+            continue;
            case 'c': /* Stop parsing immediately, write what we have, die. */
+            fbuf[strlen(fbuf)-1]='s';
+            sprintf (buf+strlen(buf), fbuf, bbuf);
             fwrite(buf, 1, strlen(buf), stdout);
             exit(0);
            case '\\':
-            buf[strlen(buf)]='\\';
+            bbuf[strlen(bbuf)]='\\';
             j++;
             continue;
            case 'a':
-            buf[strlen(buf)]='\a';
+            bbuf[strlen(bbuf)]='\a';
             j++;
             continue;
            case 'b':
-            buf[strlen(buf)]='\b';
+            bbuf[strlen(bbuf)]='\b';
             j++;
             continue;
            case 'f':
-            buf[strlen(buf)]='\f';
+            bbuf[strlen(bbuf)]='\f';
             j++;
             continue;
            case 'n':
-            buf[strlen(buf)]='\n';
+            bbuf[strlen(bbuf)]='\n';
             j++;
             continue;
            case 'r':
-            buf[strlen(buf)]='\r';
+            bbuf[strlen(bbuf)]='\r';
             j++;
             continue;
            case 't':
-            buf[strlen(buf)]='\t';
+            bbuf[strlen(bbuf)]='\t';
             j++;
             continue;
            case 'v':
-            buf[strlen(buf)]='\v';
+            bbuf[strlen(bbuf)]='\v';
             j++;
             continue;
            default:
-            buf[strlen(buf)]='\\';
+            bbuf[strlen(bbuf)]='\\';
             /* FALL OUT */
           }
          }
-         buf[strlen(buf)]=*(j++);
+         bbuf[strlen(bbuf)]=*(j++);
         }
+        fbuf[strlen(fbuf)-1]='s';
+        sprintf (buf+strlen(buf), fbuf, bbuf);
        }
        state=STATE_NORMAL;
        i++;
