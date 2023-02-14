@@ -78,6 +78,7 @@ test
 time
 touch
 true
+ts
 tty
 uname
 unlink

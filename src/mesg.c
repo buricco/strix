@@ -50,6 +50,7 @@ int main (int argc, char **argv)
  struct stat stat;
  int e, r;
  int ttyhand;
+ int m;
 
  /*
   * Process the name of the program.
@@ -62,12 +63,23 @@ int main (int argc, char **argv)
   * Validate arguments.
   * If invalid, die screaming.
   * In any case, if there is an error, do NOT return 0 or 1.
+  *   Supports System V "-n" and "-y", but we don't document this.
   */
  if (argc>2) usage();
  if (argc==2)
  {
-  if (argv[1][1]) usage();
-  if ((*argv[1]!='y')&&(*argv[1]!='n')) usage();
+  if (argv[1][0]=='-')
+  {
+   m=argv[1][1];
+   if (argv[1][2]) usage();
+  }
+  else
+  {
+   m=*argv[1];
+   if (argv[1][1]) usage();
+  }
+
+  if ((m!='y')&&(m!='n')) usage();
  }
 
  /*
@@ -111,7 +123,7 @@ int main (int argc, char **argv)
   * If we fail, die screaming.
   */
  e=stat.st_mode;
- if (*argv[1]=='y')
+ if (m=='y')
  {
   e |= S_IWGRP;
   r=0;

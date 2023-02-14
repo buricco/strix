@@ -135,6 +135,7 @@ $CC -o ../bin/tee tee.c
 $CC -o ../bin/test test.c
 $CC -o ../bin/time time.c
 $CC -o ../bin/touch touch.c
+$CC -o ../bin/ts ts.c
 $CC -o ../bin/tty tty.c
 $CC -o ../bin/uname uname.c
 $CC -o ../bin/unlink unlink.c
