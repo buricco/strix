@@ -100,6 +100,7 @@ $CC -D__SVR4__ -o ../bin/getopt getopt.c
 $CC -D__SVR4__ -I../support -I../support/regex -o ../bin/grep grep.c ../support/getline.c -L../lib -lregex
 $CC -D__SVR4__ -I../support -o ../bin/head head.c ../support/getline.c
 $CC -D__SVR4__ -I../support -o ../bin/id id.c ../support/getgrouplist.c
+$CC -D__SVR4__ -o ../bin/hostid hostid.c -lucb
 $CC -D__SVR4__ -o ../bin/ipcrm ipcrm.c
 $CC -D__SVR4__ -I../support -o ../bin/kill kill.c ../support/signames.c
 $CC -D__SVR4__ -I../support -o ../bin/killall killall.c ../support/signames.c

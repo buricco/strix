@@ -32,6 +32,7 @@ getopt
 grep
 groups (id)
 head
+hostid
 hostname (uname)
 id
 ipcrm

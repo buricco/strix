@@ -715,6 +715,11 @@ int main (int argc, char **argv)
  if (progname) progname++; else progname=argv[0];
 
  mode=0;
+ 
+ /* Different defaults if invoked as dir or vdir; GNU */
+ if (!strcmp(progname, "dir")) mode=MODE_C|mode_b;
+ if (!strcmp(progname, "vdir")) mode=MODE_l|mode_b;
+ 
  while (-1!=(e=getopt(argc, argv, "1ACFHLPRSTabcdfgiklmnopqrstux")))
  {
   switch (e)

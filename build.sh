@@ -93,6 +93,7 @@ $CC -o ../bin/fold fold.c
 $CC -o ../bin/getopt getopt.c
 $CC -o ../bin/grep grep.c
 $CC -o ../bin/head head.c
+$CC -o ../bin/hostid hostid.c
 $CC -o ../bin/id id.c
 $CC -o ../bin/ipcrm ipcrm.c
 [ "$UNAME" = Linux ] && $CC -o ../bin/ipcs ipcs.c
