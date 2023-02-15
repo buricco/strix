@@ -35,6 +35,8 @@
  * that far in the first place.
  */
 
+#define _XOPEN_SOURCE 700
+#include <sys/stat.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>

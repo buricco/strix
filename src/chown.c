@@ -33,7 +33,7 @@
  *   -P - Physical.
  */
 
-#define _XOPEN_SOURCE 500 /* nftw(3) */
+#define _XOPEN_SOURCE 700 /* nftw(3) */
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <ctype.h>

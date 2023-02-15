@@ -31,7 +31,7 @@
 
 #include <sys/stat.h>
 #include <errno.h>
-#ifdef linux
+#if defined(__linux__)||defined(__OpenBSD__)
 #include <utmp.h>
 #else
 #include <utmpx.h>
@@ -67,7 +67,7 @@ int do_who (char *filename, int meonly, int showidle, int header,
             int writable, int type)
 {
  FILE *file;
-#ifdef linux
+#if defined(__linux__)||defined(__OpenBSD__)
  struct utmp utmp;
 #else
  struct utmpx utmp;
@@ -117,7 +117,7 @@ int do_who (char *filename, int meonly, int showidle, int header,
   
   if (utmp.ut_type!=type) continue;
   if (meonly)
-#ifdef linux
+#if defined(__linux__)||defined(__OpenBSD__)
    if (strncmp(p,utmp.ut_line,UT_LINESIZE)) continue;
 #else
    if (strncmp(p,utmp.ut_line,UTX_LINESIZE)) continue;
@@ -135,7 +135,7 @@ int do_who (char *filename, int meonly, int showidle, int header,
   {
    char *b;
    
-#ifdef linux
+#if defined(__linux__)||defined(__OpenBSD__)
    b=malloc(UT_LINESIZE+6);
 #else
    b=malloc(UTX_LINESIZE+6);
@@ -159,7 +159,7 @@ int do_who (char *filename, int meonly, int showidle, int header,
   {
    char *b;
    
-#ifdef linux
+#if defined(__linux__)||defined(__OpenBSD__)
    b=malloc(UT_LINESIZE+6);
 #else
    b=malloc(UTX_LINESIZE+6);

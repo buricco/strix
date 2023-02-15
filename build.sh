@@ -140,7 +140,7 @@ $CC -o ../bin/tty tty.c
 $CC -o ../bin/uname uname.c
 $CC -o ../bin/unlink unlink.c
 $CC -o ../bin/wc wc.c
-$CC -o ../bin/who who.c
+[ "$UNAME" = OpenBSD ] || [ "$UNAME" = FreeBSD ] || $CC -o ../bin/who who.c
 $CC -o ../bin/which which.c
 $CC -o ../bin/yes yes.c
 cd ../bin

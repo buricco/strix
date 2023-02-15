@@ -40,7 +40,7 @@
  *       unique extensions.
  */
 
-#define _XOPEN_SOURCE 500
+#define _XOPEN_SOURCE 700
 #define _DEFAULT_SOURCE
 #include <sys/stat.h>
 #include <errno.h>
@@ -56,7 +56,7 @@
 
 #define ITERATE_MAX_HANDLES 5
 
-#ifdef __SVR4__
+#if defined(__SVR4__)||defined(__NetBSD__)
 #define CP_OLD_UTIME
 #endif
 

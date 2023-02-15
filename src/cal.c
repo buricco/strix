@@ -208,7 +208,7 @@ int main (int argc, char **argv)
   y=strtoul(argv[1], 0, 0);
   if (errno||(!y)||(y>9999))
   {
-   fprintf (stderr, "%s: bogus year '%s'\n", argv[2]);
+   fprintf (stderr, "%s: bogus year '%s'\n", progname, argv[2]);
    return 1;
   }
   r=0;
@@ -226,14 +226,14 @@ int main (int argc, char **argv)
   m=strtoul(argv[1], 0, 0);
   if (errno||(!m)||(m>12))
   {
-   fprintf (stderr, "%s: bogus month '%s'\n", argv[1]);
+   fprintf (stderr, "%s: bogus month '%s'\n", progname, argv[1]);
    return 1;
   }
   errno=0;
   y=strtoul(argv[2], 0, 0);
   if (errno||(!y)||(y>9999))
   {
-   fprintf (stderr, "%s: bogus year '%s'\n", argv[2]);
+   fprintf (stderr, "%s: bogus year '%s'\n", progname, argv[2]);
    return 1;
   }
   
