@@ -146,7 +146,7 @@ $CC -o ../bin/which which.c
 $CC -o ../bin/yes yes.c
 cd ../bin
 ./chmod +x true false mvdir
-./rm -f arch domainname hostname chgrp dirname egrep fgrep groups pkill printenv sum whoami
+./rm -f arch domainname hostname chgrp dirname egrep fgrep groups md5 pkill printenv sum whoami
 ./ln -s uname arch
 ./ln -s uname domainname
 ./ln -s uname hostname
@@ -158,4 +158,5 @@ cd ../bin
 ./ln -s id whoami
 [ "$UNAME" = Linux ] && ./ln -s pgrep pkill
 ./ln -s env printenv
+./ln -s cksum md5
 ./ln -s cksum sum

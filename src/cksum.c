@@ -30,13 +30,33 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* If invoked as sum, acts as sum. */
+/* Thanks: bluesun on Hoshinet and forty on Virtually Fun's Discord */
+
+/*
+ * If invoked as sum or md5, acts as the relevant command.
+ * Also:
+ *   -a posix  -o 0
+ *   -a bsd    -o 1
+ *   -a sysv   -o 2
+ *   -a md5
+ * 
+ * XXX: something isn't defined right for SVR4 and bogus MD5 checksums are
+ *      generated.
+ */
 
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#ifdef __SVR4__
+typedef unsigned char uint8_t;
+typedef unsigned short uint16_t;
+typedef unsigned long uint32_t;
+#else
+#include <stdint.h>
+#endif
 
 static char *copyright="@(#) (C) Copyright 2020, 2022, 2023 S. V. Nickolas\n";
 
@@ -89,6 +109,7 @@ static unsigned long crctab[] =
  0xBCB4666D, 0xB8757BDA, 0xB5365D03, 0xB1F740B4
 };
 
+
 /* prerror(3) with the name of the utility AND the name of the input file. */
 void xperror (char *filename)
 {
@@ -98,6 +119,51 @@ void xperror (char *filename)
  if (!strcmp(filename, "-")) x="(stdin)";
 
  fprintf (stderr, "%s: %s: %s\n", progname, x, strerror(errno));
+}
+
+void scram (void)
+{
+ fprintf (stderr, "%s: out of memory\n", progname);
+ exit(1);
+}
+
+uint32_t quadize (uint8_t *x)
+{
+ uint32_t y;
+ 
+ y=x[3];
+ y<<=8;
+ y|=x[2];
+ y<<=8;
+ y|=x[1];
+ y<<=8;
+ y|=x[0];
+ return y;
+}
+
+void quad16 (uint32_t *tgt, uint8_t *src)
+{
+ int t;
+ 
+ for (t=0; t<16; t++)
+  tgt[t]=quadize(src+(t<<2));
+}
+
+uint32_t roll32 (uint32_t in, uint8_t bits)
+{
+#ifdef __SVR4__
+ uint32_t left, right;
+ 
+ right=in<<bits;
+ left=in>>(32-bits);
+ return left|right;
+#else
+ uint64_t work;
+ 
+ work=in;
+ work<<=bits;
+ return (work&0xFFFFFFFF)|(work>>32);
+#endif
 }
 
 int crcop (char *filename, unsigned long *retval1, size_t *retval2)
@@ -316,29 +382,249 @@ int sum_main (int argc, char **argv)
  return e;
 }
 
+void md5 (uint8_t *buffer, size_t buflen, uint8_t *output)
+{
+ uint8_t digest[16];
+ uint8_t lastblock[64];
+ uint32_t A, B, C, D;
+ uint32_t i;
+ uint32_t a0, b0, c0, d0;
+#ifdef __SVR4__
+ uint32_t iter;
+ uint32_t buflen_bits;
+#else
+ uint64_t iter;
+ uint64_t buflen_bits;
+#endif
+
+ const uint32_t s[64]={
+  7, 12, 17, 22,  7, 12, 17, 22,  7, 12, 17, 22,  7, 12, 17, 22,
+  5,  9, 14, 20,  5,  9, 14, 20,  5,  9, 14, 20,  5,  9, 14, 20,
+  4, 11, 16, 23,  4, 11, 16, 23,  4, 11, 16, 23,  4, 11, 16, 23,
+  6, 10, 15, 21,  6, 10, 15, 21,  6, 10, 15, 21,  6, 10, 15, 21
+ };
+
+ const uint32_t K[64]={
+  0xD76AA478, 0xE8C7B756, 0x242070DB, 0xC1BDCEEE,
+  0xF57C0FAF, 0x4787C62A, 0xA8304613, 0xFD469501,
+  0x698098D8, 0x8B44F7AF, 0xFFFF5BB1, 0x895CD7BE,
+  0x6B901122, 0xFD987193, 0xA679438E, 0x49B40821,
+  0xF61E2562, 0xC040B340, 0x265E5A51, 0xE9B6C7AA,
+  0xD62F105D, 0x02441453, 0xD8A1E681, 0xE7D3FBC8,
+  0x21E1CDE6, 0xC33707D6, 0xF4D50D87, 0x455A14ED,
+  0xA9E3E905, 0xFCEFA3F8, 0x676F02D9, 0x8D2A4C8A,
+  0xFFFA3942, 0x8771F681, 0x6D9D6122, 0xFDE5380C,
+  0xA4BEEA44, 0x4BDECFA9, 0xF6BB4B60, 0xBEBFBC70,
+  0x289B7EC6, 0xEAA127FA, 0xD4EF3085, 0x04881D05,
+  0xD9D4D039, 0xE6DB99E5, 0x1FA27CF8, 0xC4AC5665,
+  0xF4292244, 0x432AFF97, 0xAB9423A7, 0xFC93A039,
+  0x655B59C3, 0x8F0CCC92, 0xFFEFF47D, 0x85845DD1,
+  0x6FA87E4F, 0xFE2CE6E0, 0xA3014314, 0x4E0811A1,
+  0xF7537E82, 0xBD3AF235, 0x2AD7D2BB, 0xEB86D391
+ };
+ 
+ a0=0x67452301;
+ b0=0xEFCDAB89;
+ c0=0x98BADCFE;
+ d0=0x10325476;
+ 
+ for (iter=0; iter<buflen; iter+=64)
+ {
+  uint32_t M[16];
+  
+  quad16(M, (buffer+iter));
+  
+  A=a0; B=b0; C=c0; D=d0;
+
+  for (i=0; i<64; i++)
+  {
+   uint32_t F, g;
+   
+   if (i<16)
+   {
+    F=(B&C)|((~B)&D);
+    g=i;
+   }
+   else if (i<32)
+   {
+    F=(D&B)|((~D)&C);
+    g=((i*5)+1)%16;
+   }
+   else if (i<48)
+   {
+    F=B^C^D;
+    g=((3*i)+5)%16;
+   }
+   else if (i<64)
+   {
+    F=C^(B|(~D));
+    g=(7*i)%16;
+   }
+   F+=A+K[i]+M[g];
+   A=D;
+   D=C;
+   C=B;
+   B+=roll32(F, s[i]);
+  }
+  a0+=A;
+  b0+=B;
+  c0+=C;
+  d0+=D;
+ }
+
+ /* Truncate into bytes, force low endian */
+ digest[0x0]=a0; digest[0x1]=a0>>8; digest[0x2]=a0>>16; digest[0x3]=a0>>24;
+ digest[0x4]=b0; digest[0x5]=b0>>8; digest[0x6]=b0>>16; digest[0x7]=b0>>24;
+ digest[0x8]=c0; digest[0x9]=c0>>8; digest[0xA]=c0>>16; digest[0xB]=c0>>24;
+ digest[0xC]=d0; digest[0xD]=d0>>8; digest[0xE]=d0>>16; digest[0xF]=d0>>24;
+ 
+ memcpy(output, digest, 16);
+}
+
+int do_md5 (char *filename, int suppress)
+{
+ int c, e;
+ FILE *file;
+ char *slurp;
+ size_t l, lx;
+ uint8_t mymd5[16];
+
+#ifdef __SVR4__
+ uint32_t lb;
+#else
+ uint64_t lb;
+#endif
+ 
+ if (!strcmp(filename, "-"))
+ {
+  char foo[19];
+  int h;
+
+  /* 19 */
+  strcpy(foo, "/var/tmp/md5XXXXXX");
+
+#ifdef __SVR4__ /* DO NOT DO THIS, MAGGOT! */
+  file=fopen(mktemp(foo), "w");
+#else
+  h=mkstemp(foo);
+  if (h<0)
+  {
+   fprintf (stderr, "%s: could not open holding tank for stdin\n", progname);
+   exit(1);
+  }
+  file=fdopen(h, "w");
+#endif
+  rewind(stdin);
+  while ((c=getchar())>=0) fputc(c, file);
+  fclose(file);
+  e=do_md5(foo, 1);
+  unlink(foo);
+  return e;
+ }
+
+ /* Slurp file */
+ file=fopen(filename, "r");
+ if (!file)
+ {
+  xperror(filename);
+  return 1;
+ }
+ fseek(file, 0, SEEK_END);
+ l=ftell(file);
+ fseek(file, 0, SEEK_SET);
+ lx=l+9;
+ if (lx%64) lx+=64-(lx%64);
+ slurp=calloc(lx, 1);
+ 
+ if (!slurp) scram();
+ if (fread(slurp, 1, l, file)<l)
+ {
+  free(slurp);
+  perror(filename);
+  return 1;
+ }
+ fclose(file);
+
+ slurp[l]=0x80;
+ lb=l<<3;
+ 
+ slurp[lx-8]=lb;
+ slurp[lx-7]=lb>>8;
+ slurp[lx-6]=lb>>16;
+ slurp[lx-5]=lb>>24;
+#ifdef __SVR4__
+ memset(&(slurp[lx-4]), 0, 4);
+#else
+ slurp[lx-4]=lb>>32;
+ slurp[lx-3]=lb>>40;
+ slurp[lx-2]=lb>>48;
+ slurp[lx-1]=lb>>56;
+#endif
+
+ md5((uint8_t *) slurp, lx, mymd5);
+ free(slurp);
+ 
+ for (c=0; c<16; c++) printf ("%02x", mymd5[c]);
+ if (!suppress) printf ("  %s", filename);
+ printf ("\n");
+
+ return 0;
+}
+
+int md5_main (int argc, char **argv)
+{
+ int e, r, t;
+ 
+ if (argc==1) return do_md5("-", 0);
+
+ r=0;
+ for (t=1; t<argc; t++)
+ {
+  e=do_md5(argv[t], 0);
+  if (r<e) r=e;
+ }
+
+ return r;
+}
+
 void usage (void)
 {
- fprintf (stderr, "%s: usage: %s [-o {1 | 2}] [file ...]\n", 
+ fprintf (stderr, "%s: usage: %s [-a name | -o {1 | 2}] [file ...]\n", 
           progname, progname);
  exit(1);
 }
 
 int main (int argc, char **argv)
 {
- int e, m, r, t;
+ int a, e, m, r, t;
 
  progname=strrchr(argv[0], '/');
  if (progname) progname++; else progname=argv[0];
 
+ if (!strcmp(progname, "md5"))
+  return md5_main(argc, argv);
+ 
  if (!strcmp(progname, "sum")) 
   return sum_main(argc, argv);
 
- m=0;
- while (-1!=(e=getopt(argc, argv, "o:")))
+ a=m=0;
+ while (-1!=(e=getopt(argc, argv, "a:o:")))
  {
   switch (e)
   {
+   case 'a':
+    a|=1;
+    if (!strcmp(optarg, "posix"))
+     m=0;
+    if (!strcmp(optarg, "bsd"))
+     m=1;
+    if (!strcmp(optarg, "sysv"))
+     m=2;
+    if (!strcmp(optarg, "md5"))
+     m=3;
+    break;
    case 'o':
+    a|=2;
     if (!strcmp(optarg, "0"))
      m=0;
     else if (!strcmp(optarg, "1"))
@@ -349,6 +635,12 @@ int main (int argc, char **argv)
    default:
     usage();
   }
+ }
+ 
+ if (a==3)
+ {
+  fprintf (stderr, "%s: -a and -o are mutually exclusive\n", progname);
+  return 1;
  }
  
  /* 1: rsum(), 2: sum() */
@@ -404,6 +696,8 @@ int main (int argc, char **argv)
   }
   return e;
  }
+ 
+ if (m==3) return md5_main(argc-(optind-1) , argv+(optind-1));
  
  if (argc==optind) return do_cksum("-", 1);
  

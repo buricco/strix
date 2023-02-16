@@ -136,7 +136,7 @@ $CC -D__SVR4__ -o ../bin/who who.c
 $CC -D__SVR4__ -o ../bin/yes yes.c
 cd ../bin
 chmod +x true false mvdir
-rm -f arch hostname chgrp dirname egrep fgrep groups printenv sum whoami
+rm -f arch hostname chgrp dirname egrep fgrep groups md5 printenv sum whoami
 ln -s uname arch
 ln -s uname hostname
 ln -s chown chgrp
@@ -146,4 +146,5 @@ ln -s grep fgrep
 ln -s id groups
 ln -s id whoami
 ln -s env printenv
+ln -s cksum md5
 ln -s cksum sum
