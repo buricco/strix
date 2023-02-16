@@ -197,7 +197,7 @@ int do_who (char *filename, int meonly, int showidle, int header,
 
 void usage (void)
 {
- fprintf (stderr, "%s: usage: %s [-abdHlmprstTu] [file]\n"
+ fprintf (stderr, "%s: usage: %s [-HTabdlmprstu] [file]\n"
                   "%s: usage: %s -q [file]\n"
                   "%s: usage: who am i\n", 
           progname, progname, progname, progname, progname);

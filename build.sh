@@ -159,7 +159,7 @@ $CC -o ../bin/which which.c
 $CC -o ../bin/yes yes.c
 cd ../bin
 ./chmod +x true false mvdir
-./rm -f arch domainname hostname chgrp dirname egrep fgrep groups md5 pkill printenv sha1 sha224 sha256 sha384 sum whoami
+./rm -f \[ arch domainname hostname chgrp dirname egrep fgrep groups md5 pkill printenv sha1 sha224 sha256 sha384 sum whoami
 ./ln -s uname arch
 ./ln -s uname domainname
 ./ln -s uname hostname
@@ -177,3 +177,4 @@ cd ../bin
 ./ln -s sha512 sha224
 ./ln -s sha512 sha256
 ./ln -s sha512 sha384
+./ln -s test \[

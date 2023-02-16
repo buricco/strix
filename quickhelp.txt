@@ -1,0 +1,306 @@
+[
+  Performs various comparisons.
+
+arch
+  Displays the machine architecture (equivalent to uname -m)
+
+asa         [filename ...]
+  Translates output of Fortran code.
+
+banner      string ...
+  Displays large text.
+
+basename    string [suffix]
+  Strips a pathname and optional suffix off a filename.
+
+cal         [[month] year]
+  Displays a monthly or annual calendar.
+
+cat         [-estuv] [filename ...]
+  Displays or concatenates files.
+
+chgrp       [-R [-HLP]] group filename ...
+  Changes the group associated with a file or group of files.
+
+chmod       [-Rv] mode filename ...
+  Changes the mode (usually access permissions) of a file or group of files.
+
+chown       [-R [-HLP]] owner[:group] filename ...
+  Changes the owner and/or group associated with a file or group of files.
+
+chroot      newroot command
+  Runs a command under an alternative root path.
+
+chvt        vt
+  Sets the current virtual terminal.
+
+cksum       [-a name | -o {1 | 2}] [filename ...]
+  Displays the POSIX, System V or BSD checksum of a file or group of files.
+
+cmp         [-ls] filename1 filename2 [offset1 [offset2]]
+  Compares files.
+
+comm        [-123] filename1 filename2
+  Shows common portions of files.
+
+date        [-u +format]
+            [-au] MMDDhhmm[[yy]yy]
+  Shows or sets the system date.
+
+dd          [if=filename] [of=filename] [[i|o|c]bs=size] [skip=num] [seek=num]
+               [count=num] [conv=mode] ...
+  Transfers data in blocks between files.
+
+dircmp      [-ds] path1 path2
+  Compares directories.
+
+dirname     string
+  Strips the base component from a filename.
+
+dispgid
+  Displays a list of valid group names.
+
+dispuid
+  Displays a list of valid user names.
+
+domainname  [name]
+  Displays or sets the NIS domain.
+
+du          [-HLPacksx] [path ...]
+  Shows amount of disk space used by the files in a directory tree.
+
+echo        string
+  Displays a string.
+
+egrep       [-HRbchlinqrsvx] pattern [filename ...]
+            [-HRbchlinqrsvx] {-e pattern | -f patternfile} [filename ...]
+  Searches files against an extended regular expression.
+
+env         [-i] [tag=content ...] command args ...
+  Runs a command with a modified environment.
+
+factor      [value]
+  Shows prime factors of a number.
+
+false
+  Fails.
+
+fgrep       [-HRbchlinqrsvx] pattern [filename ...]
+            [-HRbchlinqrsvx] {-e pattern | -f patternfile} [filename ...]
+  Searches files against a string.
+
+fmtmsg      -a action -c class -l label [-s severity] -t tag
+                -u subclass[,subclass...] text
+  Displays an error message formatted according to a standard format.
+
+fold        [-bs] [-w width] [filename ...]
+  Automatically wraps lines in a text file.
+
+getopt      optstring "$@"
+  Parses switches provided to a shell script.
+
+grep        [-EFHRbchlinqrsvx] pattern [filename ...]
+            [-EFHRbchlinqrsvx] {-e pattern | -f patternfile} [filename ...]
+  Searches files against a regular expression.
+
+groups      [name]
+  Displays groups to which a user (default: current user) belongs.
+
+head        [-n lines] [filename ...]
+  Displays the first several (default: 10) lines of a file.
+
+hostid
+  Displays the system's host ID in hexadecimal format.
+
+hostname    [-s | name]
+  Displays or set the system's host name.
+
+id          [-Ggu [-nr]] [user]
+  Displays the effective user and group ID for a user, as well as any other
+  groups to which the user may belong.
+
+ipcrm       [-m id] [-s id] [-q id] [-M key] [-S key] [-Q key]
+  Removes interprocess communication queues, semaphores or shared segments.
+
+ipcs        [-mqs] [-abcopt]
+  Displays status of interprocess communication facilities.
+
+kill        [-SIGNAL] process ...
+            [-s SIGNAME] process ...
+            [-n SIGNUM] process ...
+            -l [SIGNUM ...]
+  Kills or send signals to processes, or displays a list of valid signals.
+
+killall     [signal]
+  Kills all processes in preparation for system shutdown.
+
+line
+  Reads a line from standard input.
+
+link        filename1 filename2
+  Creates a hard link.
+
+ln          [-fs] [-LP] source ... target
+  Creates hard links or symbolic links to files or paths.
+
+logname
+  Displays the user's login name.
+
+makekey
+  Generates an encryption key.
+
+md5         [filename ...]
+  Displays the MD5 checksum for a file or group of files.
+
+mesg        {y | n}
+  Enables or disables the ability for users to send messages to your terminal.
+
+mkdir       [-m mode] [-p] dirname ...
+  Creates folders.
+
+mkfifo      [-m mode] filename ...
+  Creates FIFO device files (named pipes).
+
+mknod       name {b | c} major minor
+            name p
+  Creates block or character special device files.
+
+mv          [-fiv] source ... target
+  Moves files or folders.
+
+mvdir       source target
+  Moves folders.
+
+newer       filename1 filename2
+  Returns an exit code denoting if one file is newer than another.
+
+news        [-ans | article ...]
+  Displays system news.
+
+nice        [-n increment] command
+  Runs a program with extra "niceness."
+
+nohup       command args ...
+  Ensures that a program will not be reaped when the terminal is disconnected.
+
+nologin
+  Refuses to log in.
+
+pgrep       [-dfilvx] expression ...
+  Displays process IDs of tasks whose names match a given regular expression.
+
+pkill       [-S signal] [-dfivx] expression ...
+  Kills tasks whose names match a given regular expression.
+
+printenv    [variable ...]
+  Displays environment variables.
+
+printf      format [args ...]
+  Displays formatted data.
+
+pwd
+  Displays the present working directory.
+
+random      [-s] [scale]
+  Produces a semi-random number.
+
+readlink    [-fn] filename
+  Displays the target of a symbolic link.
+
+realpath    [-q] [path ...]
+  Resolves a pathname.
+
+rename      oldname newname
+  Renames a file.
+
+renice      [-gpu] -n increment id ...
+  Changes the "niceness" of a process.
+
+rm          [-Rdifvx] filename ...
+  Removes files and directory trees.
+
+rmdir       [-p] dirname ...
+  Removes empty directories.
+
+setpgrp     command args ...
+  Runs a command with an altered process group ID.
+
+sha1        [filename ...]
+  Displays the SHA-1 checksum for a file or group of files.
+
+sha224      [filename ...]
+  Displays the SHA-224 (224-bit SHA-2) checksum for a file or group of files.
+
+sha256      [filename ...]
+  Displays the SHA-256 (256-bit SHA-2) checksum for a file or group of files.
+
+sha384      [filename ...]
+  Displays the SHA-384 (384-bit SHA-2) checksum for a file or group of files.
+
+sha512      [filename ...]
+  Displays the SHA-512 (512-bit SHA-2) checksum for a file or group of files.
+
+sleep       seconds
+  Pauses.
+
+split       [-l lines] [-a suffixlen] [filename [prefix]]
+            -b [size[k | m] [-a suffixlen] [filename [prefix]]
+  Splits a file into chunks.
+
+sum         [-r] [filename ...]
+  Displays the System V or BSD checksum of a file or group of files.
+
+sync
+  Directs the kernel to flush all file buffers to disk.
+
+tac         [filename ...]
+  Displays a file in reverse line order.
+
+tail        [-f] [-bcn offset] [filename ...]
+  Displays the end of a file.
+
+tee         [-ai] [filename ...]
+  Redirects standard output to multiple files.
+
+test        [operator ...]
+  Performs various comparisons.
+
+time        [-p] command args ...
+  Times a command.
+
+touch       [-acm] [-d yyyy-mm-dd[Thh:mm:ss[.nnnnnnnnn][Z]]]
+               [-t [[yy]yy]mmddhhmm[.ss]] [-r file] filename ...
+  Changes the timestamp on a file or group of files.
+
+true
+  Succeeds.
+
+ts          [-ims] [format]
+  Prepends timestamps to lines of text received on standard input.
+
+tty
+  Displays the name (if available) of the terminal controlling standard input.
+
+uname       [-amnrsv]
+            [-S name]
+  Displays information about the running operating system.
+
+unlink      filename
+  Removes a file.
+
+wc          [-clmw] [filename ...]
+  Displays the number of words, lines or characters in a file.
+
+which       [-a] command
+  Attempts to locate a command in the shell's current path.
+
+who         [-HTabdlmprstu] [file]
+            -q [file]
+            am i
+  Displays a list of logged-in users.
+
+whoami
+  Displays the name associated with the current effective user ID.
+
+yes         [string]
+  Outputs an affirmative, or another string, until terminated.

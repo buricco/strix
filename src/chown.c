@@ -142,8 +142,8 @@ int do_chown (char *filename, int override)
 
 void usage (void)
 {
- fprintf (stderr, "%s: usage: %s [-R [-H | -L | -P]] owner[:group] file...\n",
-          progname, progname);
+ fprintf (stderr, "%s: usage: %s [-R [-H | -L | -P]] %s file...\n",
+          progname, progname, is_chgrp?"group":"owner[:group]");
  exit(1);
 }
 

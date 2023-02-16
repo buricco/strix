@@ -33,37 +33,37 @@
 static char *progname;
 
 #ifdef __SVR4__
-typedef unsigned long xulong;
-#define strtoxul strtoul
-#define PXUL "%lu"
+typedef long xlong;
+#define strtoxl strtol
+#define PXL "%ld"
 #else
-typedef unsigned long long xulong;
-#define strtoxul strtoull
-#define PXUL "%llu"
+typedef long long xlong;
+#define strtoxl strtoll
+#define PXL "%lld"
 #endif
 
 static char *copyright="@(#) (C) Copyright 2023 S. V. Nickolas\n";
 
 int do_factor (char *x)
 {
- xulong n, t, v;
+ xlong n, t, v;
 
  errno=0;
- n=strtoxul(x, 0, 0);
- if (errno)
+ n=strtoxl(x, 0, 0);
+ if ((errno)||(n<1))
  {
   fprintf (stderr, "%s: bogus value '%s'\n", progname, x);
   return 1;
  }
  
- printf (PXUL ":", n);
+ printf (PXL ":", n);
  v=n;
  for (t=2; t<=v; t++)
  {
   while (!(v%t))
   {
    v=v/t;
-   printf (" " PXUL, t);
+   printf (" " PXL, t);
   }
  }
  printf ("\n");

@@ -158,7 +158,8 @@ int main (int argc, char **argv)
  ispkill=0;
  mode=SIGTERM;
 
- progname=argv[0];
+ progname=strrchr(argv[0], '/');
+ if (progname) progname++; else progname=argv[0];
 
  if (strstr(progname,"kill")) ispkill=1;
 

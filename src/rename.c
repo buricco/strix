@@ -1,9 +1,6 @@
 /*
  * (C) Copyright 2023 S. V. Nickolas.
  * 
- * This code is a partial rewrite and contains elements of the version placed
- * into the public domain in December 1983 by Mike Muuss.
- * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *

@@ -163,6 +163,12 @@ int monthly (unsigned month, unsigned year)
  return 1;
 }
 
+void usage (void)
+{
+ fprintf (stderr, "%s: usage: %s [[month] year]\n", progname, progname);
+ exit (1);
+}
+
 int main (int argc, char **argv)
 {
  struct tm *tm;
@@ -172,6 +178,8 @@ int main (int argc, char **argv)
  
  progname=strrchr(argv[0], '/');
  if (progname) progname++; else progname=argv[0];
+ 
+ if (argc>3) usage();
  
  /*
   * Also sprach Posix: "[The environment variable] TZ [is used to] determine
@@ -208,7 +216,7 @@ int main (int argc, char **argv)
   y=strtoul(argv[1], 0, 0);
   if (errno||(!y)||(y>9999))
   {
-   fprintf (stderr, "%s: bogus year '%s'\n", progname, argv[2]);
+   fprintf (stderr, "%s: bogus year '%s'\n", progname, argv[1]);
    return 1;
   }
   r=0;
