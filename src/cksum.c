@@ -33,14 +33,18 @@
 /* Thanks: bluesun on Hoshinet and forty on Virtually Fun's Discord */
 
 /*
- * If invoked as sum or md5, acts as the relevant command.
+ * If invoked as sum, md5, or sha1, acts as the relevant command.
  * Also:
  *   -a posix  -o 0
  *   -a bsd    -o 1
  *   -a sysv   -o 2
  *   -a md5
+ *   -a sha1
  * 
- * XXX: something isn't defined right for SVR4 and bogus MD5 checksums are
+ * The output of "md5" and "sha1" is more or less the same as that output by
+ * the GNU "md5sum" and "sha1sum" utilities.
+ * 
+ * XXX: something isn't defined right for SVR4 and bogus checksums are
  *      generated.
  */
 
@@ -110,7 +114,7 @@ static unsigned long crctab[] =
 };
 
 
-/* prerror(3) with the name of the utility AND the name of the input file. */
+/* perror(3) with the name of the utility AND the name of the input file. */
 void xperror (char *filename)
 {
  char *x;
@@ -127,7 +131,7 @@ void scram (void)
  exit(1);
 }
 
-uint32_t quadize (uint8_t *x)
+uint32_t quadizele (uint8_t *x)
 {
  uint32_t y;
  
@@ -141,12 +145,34 @@ uint32_t quadize (uint8_t *x)
  return y;
 }
 
-void quad16 (uint32_t *tgt, uint8_t *src)
+void quad16le (uint32_t *tgt, uint8_t *src)
 {
  int t;
  
  for (t=0; t<16; t++)
-  tgt[t]=quadize(src+(t<<2));
+  tgt[t]=quadizele(src+(t<<2));
+}
+
+uint32_t quadizebe (uint8_t *x)
+{
+ uint32_t y;
+ 
+ y=x[0];
+ y<<=8;
+ y|=x[1];
+ y<<=8;
+ y|=x[2];
+ y<<=8;
+ y|=x[3];
+ return y;
+}
+
+void quad16be (uint32_t *tgt, uint8_t *src)
+{
+ int t;
+ 
+ for (t=0; t<16; t++)
+  tgt[t]=quadizebe(&(src[t<<2]));
 }
 
 uint32_t roll32 (uint32_t in, uint8_t bits)
@@ -432,7 +458,7 @@ void md5 (uint8_t *buffer, size_t buflen, uint8_t *output)
  {
   uint32_t M[16];
   
-  quad16(M, (buffer+iter));
+  quad16le(M, (buffer+iter));
   
   A=a0; B=b0; C=c0; D=d0;
 
@@ -587,6 +613,186 @@ int md5_main (int argc, char **argv)
  return r;
 }
 
+/* https://en.wikipedia.org/wiki/SHA-1 */
+
+void sha1 (uint8_t *buffer, size_t buflen, uint8_t *output)
+{
+ size_t iter;
+ uint8_t hh[20];
+ uint32_t i, w[80], a, b, c, d, e, f, k, tmp;
+ uint32_t h0, h1, h2, h3, h4;
+ 
+ h0=0x67452301; 
+ h1=0xEFCDAB89; 
+ h2=0x98BADCFE; 
+ h3=0x10325476; 
+ h4=0xC3D2E1F0;
+ 
+ for (iter=0; iter<buflen; iter+=64)
+ {
+  quad16be(w, &(buffer[iter]));
+  for (i=16; i<80; i++)
+  {
+   w[i]=roll32((w[i-3]^w[i-8]^w[i-14]^w[i-16]),1);
+  }
+  
+  a=h0;
+  b=h1;
+  c=h2;
+  d=h3;
+  e=h4;
+  
+  for (i=0; i<80; i++)
+  {
+   if (i<20)
+   {
+    f=(b&c)^((~b)&d);
+    k=0x5A827999;
+   }
+   else if (i<40)
+   {
+    f=b^c^d;
+    k=0x6ED9EBA1;
+   }
+   else if (i<60)
+   {
+    f=(b&c)^(b&d)^(c&d);
+    k=0x8F1BBCDC;
+   }
+   else
+   {
+    f=b^c^d;
+    k=0xCA62C1D6;
+   }
+   
+   tmp=roll32(a, 5)+f+e+k+w[i];
+   e=d;
+   d=c;
+   c=roll32(b, 30);
+   b=a;
+   a=tmp;
+  }
+  
+  h0+=a;
+  h1+=b;
+  h2+=c;
+  h3+=d;
+  h4+=e;
+ }
+ hh[ 0]=(h0>>24); hh[ 1]=(h0>>16); hh[ 2]=(h0>>8); hh[ 3]=h0;
+ hh[ 4]=(h1>>24); hh[ 5]=(h1>>16); hh[ 6]=(h1>>8); hh[ 7]=h1;
+ hh[ 8]=(h2>>24); hh[ 9]=(h2>>16); hh[10]=(h2>>8); hh[11]=h2;
+ hh[12]=(h3>>24); hh[13]=(h3>>16); hh[14]=(h3>>8); hh[15]=h3;
+ hh[16]=(h4>>24); hh[17]=(h4>>16); hh[18]=(h4>>8); hh[19]=h4;
+ 
+ memcpy(output, hh, 20);
+}
+
+int do_sha1 (char *filename, int suppress)
+{
+ int c, e;
+ FILE *file;
+ char *slurp;
+ size_t l, lx;
+ uint8_t mysha1[20];
+#ifdef __SVR4__
+ uint32_t lb;
+#else
+ uint64_t lb;
+#endif
+ 
+ if (!strcmp(filename, "-"))
+ {
+  char foo[19];
+  int h;
+
+  /* 19 */
+  strcpy(foo, "/var/tmp/shaXXXXXX");
+
+#ifdef __SVR4__ /* DO NOT DO THIS, MAGGOT! */
+  file=fopen(mktemp(foo), "w");
+#else
+  h=mkstemp(foo);
+  if (h<0)
+  {
+   fprintf (stderr, "%s: could not open holding tank for stdin\n", progname);
+   exit(1);
+  }
+  file=fdopen(h, "w");
+#endif
+  rewind(stdin);
+  while ((c=getchar())>=0) fputc(c, file);
+  fclose(file);
+  e=do_sha1(foo, 1);
+  unlink(foo);
+  return e;
+ }
+
+ /* Slurp file */
+ file=fopen(filename, "r");
+ if (!file)
+ {
+  xperror(filename);
+  return 1;
+ }
+ fseek(file, 0, SEEK_END);
+ l=ftell(file);
+ fseek(file, 0, SEEK_SET);
+ lx=l+9;
+ if (lx%64) lx+=64-(lx%64);
+ slurp=calloc(lx, 1);
+ 
+ if (!slurp) scram();
+ if (fread(slurp, 1, l, file)<l)
+ {
+  free(slurp);
+  perror(filename);
+  return 1;
+ }
+ fclose(file);
+
+ slurp[l]=0x80;
+ lb=l<<3;
+ 
+ slurp[lx-1]=lb;
+ slurp[lx-2]=lb>>8;
+ slurp[lx-3]=lb>>16;
+ slurp[lx-4]=lb>>24;
+#ifdef __SVR4__
+ memset(&(slurp[lx-8]), 0, 4);
+#else
+ slurp[lx-5]=lb>>32;
+ slurp[lx-6]=lb>>40;
+ slurp[lx-7]=lb>>48;
+ slurp[lx-8]=lb>>56;
+#endif
+
+ sha1((uint8_t *) slurp, lx, mysha1);
+ free(slurp);
+ 
+ for (c=0; c<20; c++) printf ("%02x", mysha1[c]);
+ if (!suppress) printf ("  %s", filename);
+ printf ("\n");
+
+ return 0;
+}
+
+int sha1_main (int argc, char **argv)
+{
+ int e, r, t;
+ 
+ if (argc==1) return do_sha1("-", 0);
+
+ r=0;
+ for (t=1; t<argc; t++)
+ {
+  e=do_sha1(argv[t], 0);
+  if (r<e) r=e;
+ }
+
+ return r;
+}
+
 void usage (void)
 {
  fprintf (stderr, "%s: usage: %s [-a name | -o {1 | 2}] [file ...]\n", 
@@ -604,6 +810,9 @@ int main (int argc, char **argv)
  if (!strcmp(progname, "md5"))
   return md5_main(argc, argv);
  
+ if (!strcmp(progname, "sha1")) 
+  return sha1_main(argc, argv);
+
  if (!strcmp(progname, "sum")) 
   return sum_main(argc, argv);
 
@@ -614,6 +823,7 @@ int main (int argc, char **argv)
   {
    case 'a':
     a|=1;
+    m=-1;
     if (!strcmp(optarg, "posix"))
      m=0;
     if (!strcmp(optarg, "bsd"))
@@ -622,6 +832,13 @@ int main (int argc, char **argv)
      m=2;
     if (!strcmp(optarg, "md5"))
      m=3;
+    if (!strcmp(optarg, "sha1"))
+     m=4;
+    if (m==-1)
+    {
+     fprintf (stderr, "%s: invalid algorithm '%s'\n", progname, optarg);
+     return 1;
+    }
     break;
    case 'o':
     a|=2;

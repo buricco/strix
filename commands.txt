@@ -69,6 +69,7 @@ renice
 rm
 rmdir
 setpgrp
+sha1 (cksum)
 sleep
 split
 sum (cksum)
