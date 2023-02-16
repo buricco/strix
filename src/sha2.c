@@ -414,7 +414,7 @@ void sha_usage (void)
 {
  fprintf (stderr, 
           "%s: usage: %s {sha224 | sha256 | sha384 | sha512} filename ...\n",
-          progname);
+          progname, progname);
  exit(1);
 }
 
