@@ -48,11 +48,12 @@ UNAME="`uname -s`"
 
 [ -n "$1" ] && [ "$1" = "clean" ] && {
  rm -f support/signames.h
- rm -rf bin
+ rm -rf bin obj lib
  exit 0
 }
 
 [ -z $CC ] && CC=cc
+[ -z $AR ] && AR=ar
 
 cd assist
 $CC -o mksignames mksignames.c
@@ -61,7 +62,18 @@ rm mksignames
 cd ..
 
 mkdir bin 2>/dev/null
-cd src
+mkdir obj 2>/dev/null
+mkdir lib 2>/dev/null
+cd support/librfc6234
+$CC -c -o ../../obj/hkdf.o hkdf.c
+$CC -c -o ../../obj/hmac.o hmac.c
+$CC -c -o ../../obj/sha1.o sha1.c
+$CC -c -o ../../obj/sha224-256.o sha224-256.c
+$CC -c -o ../../obj/sha384-512.o sha384-512.c
+$CC -c -o ../../obj/usha.o usha.c
+cd ../../obj
+$AR r ../lib/librfc6234.a hkdf.o hmac.o sha1.o sha224-256.o sha384-512.o usha.o
+cd ../src
 cp true.sh ../bin/true
 cp false.sh ../bin/false
 cp mvdir.sh ../bin/mvdir
@@ -127,6 +139,7 @@ $CC -o ../bin/renice renice.c
 $CC -o ../bin/rm rm.c
 $CC -o ../bin/rmdir rmdir.c
 $CC -o ../bin/setpgrp setpgrp.c
+$CC -I../support/librfc6234 -o ../bin/sha512 sha2.c -L../lib -lrfc6234
 $CC -o ../bin/sleep sleep.c
 $CC -o ../bin/split split.c
 $CC -o ../bin/sync sync.c
@@ -146,7 +159,7 @@ $CC -o ../bin/which which.c
 $CC -o ../bin/yes yes.c
 cd ../bin
 ./chmod +x true false mvdir
-./rm -f arch domainname hostname chgrp dirname egrep fgrep groups md5 pkill printenv sha1 sum whoami
+./rm -f arch domainname hostname chgrp dirname egrep fgrep groups md5 pkill printenv sha1 sha224 sha256 sha384 sum whoami
 ./ln -s uname arch
 ./ln -s uname domainname
 ./ln -s uname hostname
@@ -161,3 +174,6 @@ cd ../bin
 ./ln -s cksum md5
 ./ln -s cksum sha1
 ./ln -s cksum sum
+./ln -s sha512 sha224
+./ln -s sha512 sha256
+./ln -s sha512 sha384
