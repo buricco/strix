@@ -49,7 +49,7 @@ static char *progname;
  * rather barebones implementation.
  * 
  * Some switches are currently partially or totally broken.
- * Known to be broken: total -FHLps, partial -Ri
+ * Known to be broken: total -HLs, partial -FRpi
  */
                               /***********************************************/
 #define MODE_1  0x00000001UL  /* List                                        */
@@ -442,15 +442,27 @@ void dropl (char **x, int count)
   printf ("%-12s %s", datebuf, x[t]);
   if (mode&MODE_p)
   {
-   if (statbuf.st_mode&S_IFDIR) printf ("/");
+   if ((statbuf.st_mode&S_IFMT)==S_IFDIR) printf ("/");
   }
   else if (mode&MODE_F)
   {
-   if (statbuf.st_mode&S_IFDIR) printf ("/");
-   /* if (statbuf.st_mode&S_IFLNK) printf ("@"); */
-   /* if (statbuf.st_mode&S_IFIFO) printf ("|"); */
-   /* if (statbuf.st_mode&S_IFSOCK) printf ("="); */
-   /* if (access(x[t], X_OK)&&(!(statbuf.st_mode&S_IFDIR))) printf ("*"); */
+   switch (statbuf.st_mode)
+   {
+    case S_IFDIR:
+     putchar('/');
+     break;
+    case S_IFLNK:
+     putchar('@');
+     break;
+    case S_IFIFO:
+     putchar('|');
+     break;
+    case S_IFSOCK:
+     putchar('=');
+     break;
+    default:
+     if (!(access(x[t], X_OK))) putchar ('*');
+   }
   }
   if (mode&MODE_l)
   {
