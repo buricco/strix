@@ -43,6 +43,9 @@ cmp         [-ls] filename1 filename2 [offset1 [offset2]]
 comm        [-123] filename1 filename2
   Shows common portions of files.
 
+cp          [-HLPRafipv] source ... target
+  Copies files and folders.
+
 date        [-u +format]
             [-au] MMDDhhmm[[yy]yy]
   Shows or sets the system date.
@@ -166,7 +169,7 @@ mknod       name {b | c} major minor
   Creates block or character special device files.
 
 mv          [-fiv] source ... target
-  Moves files or folders.
+  Moves files and folders.
 
 mvdir       source target
   Moves folders.

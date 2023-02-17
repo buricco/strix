@@ -592,13 +592,16 @@ int gz_d (char *filename)
  }
  
  if (mode&MODE_C) strcpy(oname, "-");
-
- if (isatty(1)&&(!(mode&MODE_F)))
+ 
+ if (!strcmp(iname, "-"))
  {
-  fprintf (stderr, 
-           "%s: cowardly refusing to read crunched data from a tty"
-           " (-f to force)\n", progname);
-  return 1;
+  if (isatty(1)&&(!(mode&MODE_F)))
+  {
+   fprintf (stderr, 
+            "%s: cowardly refusing to read crunched data from a tty"
+            " (-f to force)\n", progname);
+   return 1;
+  }
  }
  
  if (strcmp(filename, "-"))
