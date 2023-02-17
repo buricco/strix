@@ -2,10 +2,6 @@ compress
   gzip needs to be reworked to support -n and -N.
   LZW support is missing.
 
-cp
-  Breaks if target is a directory.
-  Doesn't "touch" folders.  (Not a breaker)
-
 df
   Doesn't work outside of Linux.
 

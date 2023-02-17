@@ -12,6 +12,7 @@ chvt
 cksum
 cmp
 comm
+cp
 date
 dd
 dircmp

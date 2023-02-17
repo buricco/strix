@@ -25,8 +25,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* ALERT: When target is a directory, cp may break. */
-
 #define _XOPEN_SOURCE 500
 #define _DEFAULT_SOURCE
 #include <sys/stat.h>
@@ -38,6 +36,7 @@
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+#include <utime.h>
 #include <ftw.h>
 
 #define ITERATE_MAX_HANDLES 5
@@ -217,7 +216,7 @@ int copyfile (char *from, char *to)
  
  /* Copy timestamps */
 #ifdef CP_OLD_UTIME
- e=utime(to, T);
+ e=utime(to, &T);
 #else
  e=utimensat(AT_FDCWD, to, T, 0);
 #endif
@@ -445,10 +444,38 @@ int do_cp (char *from, char *to)
  {
   if (mode&MODE_R)
   {
+   char *mkfn;
+
    ref_in=from;
    ref_out=to;
+   
+   mkfn=NULL;
+   
+   if (!stat(to, &statbuf))
+   {
+    if ((statbuf.st_mode & S_IFMT) == S_IFDIR)
+    {
+     char *base;
+   
+     if (0!=(base=strrchr(from, '/'))) base++; else base=from;
+   
+     if ((strlen(to)+strlen(base)+2)>PATH_MAX)
+     {
+      fprintf (stderr, "%s: %s: target filename would be too long\n", 
+               progname, to);
+      return 1;
+     }
+   
+     mkfn=malloc(PATH_MAX);
+     if (!mkfn) scram();
+     sprintf (mkfn, "%s/%s", to, base);
+     ref_out=mkfn;
+    }
+   }
+   
    global_e=0;
    nftw(from, iterate_hit, ITERATE_MAX_HANDLES, (mode&MODE_P)?FTW_PHYS:0);
+   if (mkfn) free(mkfn);
    return global_e;
   }
   else

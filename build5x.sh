@@ -76,6 +76,7 @@ $CC -D__SVR4__ -o ../bin/chroot chroot.c
 $CC -D__SVR4__ -o ../bin/cksum cksum.c
 $CC -D__SVR4__ -o ../bin/cmp cmp.c
 $CC -D__SVR4__ -I../support -o ../bin/comm comm.c ../support/getline.c
+$CC -D__SVR4__ -o ../bin/cp cp.c
 $CC -D__SVR4__ -o ../bin/date date.c
 $CC -D__SVR4__ -o ../bin/dd dd.c
 $CC -D__SVR4__ -o ../bin/dircmp dircmp.c

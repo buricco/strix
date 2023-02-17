@@ -90,6 +90,7 @@ $CC -o ../bin/chvt chvt.c
 $CC -o ../bin/cksum cksum.c
 $CC -o ../bin/cmp cmp.c
 $CC -o ../bin/comm comm.c
+$CC -o ../bin/cp cp.c
 $CC -o ../bin/date date.c
 $CC -o ../bin/dd dd.c
 $CC -o ../bin/dircmp dircmp.c
