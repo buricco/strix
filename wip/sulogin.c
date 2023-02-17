@@ -25,15 +25,23 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if !(defined(__FreeBSD__)||defined(__OpenBSD__)||defined(__NetBSD__))
 #include <crypt.h>
+#endif
+
 #include <pwd.h>
-#include <shadow.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <termios.h>
 #include <unistd.h>
+
+#if defined(__linux__)||defined(__SVR4__)
+#include <shadow.h>
+#else
+#define NO_SHADOW
+#endif
 
 static char *copyright="@(#) (C) Copyright 2023 S. V. Nickolas\n";
 
@@ -68,7 +76,9 @@ int validate (void)
 {
  int e;
  struct passwd *p;
+#ifndef NO_SHADOW
  struct spwd *spwd;
+#endif
  struct termios termios;
  char *iter;
  
@@ -98,9 +108,13 @@ int validate (void)
  for (iter=buf;*iter;iter++); --iter; *iter=0;
  if (p)
  {
+#ifdef NO_SHADOW
+  e=strcmp(crypt(buf, p->pw_passwd), p->pw_passwd);
+#else
   spwd=getspnam(p->pw_name);
   if (spwd)
    e=strcmp(spwd->sp_pwdp, crypt(buf, spwd->sp_pwdp));
+#endif
  }
  
  /* OUT OUT DAMNED SPOT */
@@ -114,6 +128,13 @@ int validate (void)
   * OK, we zotted the plaintext copy, now zot the other one.
   * (This isn't necessary if spwd is a null pointer: there's nothing to zot.)
   */
+#ifdef NO_SHADOW
+ memset(p, 0, sizeof(struct passwd));
+ memset(p, 0x55, sizeof(struct passwd));
+ memset(p, 0xAA, sizeof(struct passwd));
+ memset(p, 0xFF, sizeof(struct passwd));
+ memset(p, 0, sizeof(struct passwd));
+#else
  if (spwd)
  {
   memset(spwd, 0, sizeof(struct spwd));
@@ -122,6 +143,7 @@ int validate (void)
   memset(spwd, 0xFF, sizeof(struct spwd));
   memset(spwd, 0, sizeof(struct spwd));
  }
+#endif
  
  /* OK, back to normalcy */
  termios.c_lflag |= ECHO;

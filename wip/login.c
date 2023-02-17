@@ -31,11 +31,17 @@
  * Not every possible security gotcha is accounted for either.
  * 
  * shadow.h and its functions seem to be specific to SVR4 and Linux.
+ * 
+ * Doesn't work on OpenBSD.
+ * Does work on FreeBSD, NetBSD and Linux (Debian).
+ * Not tested elsewhere.
  */
 
+#if !(defined(__FreeBSD__)||defined(__OpenBSD__)||defined(__NetBSD__))
 #include <crypt.h>
+#endif
+
 #include <pwd.h>
-#include <shadow.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -44,6 +50,12 @@
 #include <time.h>
 #include <unistd.h>
 #include <utmpx.h>
+
+#if defined(__linux__)||defined(__SVR4__)
+#include <shadow.h>
+#else
+#define NO_SHADOW
+#endif
 
 #ifndef DEFAULT_PATH
 #define DEFAULT_PATH "/bin:/usr/bin"
@@ -114,7 +126,9 @@ int validate (char *user)
 {
  int e;
  struct passwd *p;
+#ifndef NO_SHADOW
  struct spwd *spwd;
+#endif
  struct termios termios;
  char *iter;
  
@@ -139,9 +153,13 @@ int validate (char *user)
  for (iter=buf;*iter;iter++); --iter; *iter=0;
  if (p)
  {
+#ifdef NO_SHADOW
+  e=strcmp(crypt(buf, p->pw_passwd), p->pw_passwd);
+#else
   spwd=getspnam(p->pw_name);
   if (spwd)
    e=strcmp(spwd->sp_pwdp, crypt(buf, spwd->sp_pwdp));
+#endif
  }
  
  /* OUT OUT DAMNED SPOT */
@@ -155,6 +173,13 @@ int validate (char *user)
   * OK, we zotted the plaintext copy, now zot the other one.
   * (This isn't necessary if spwd is a null pointer: there's nothing to zot.)
   */
+#ifdef NO_SHADOW
+ memset(p, 0, sizeof(struct passwd));
+ memset(p, 0x55, sizeof(struct passwd));
+ memset(p, 0xAA, sizeof(struct passwd));
+ memset(p, 0xFF, sizeof(struct passwd));
+ memset(p, 0, sizeof(struct passwd));
+#else
  if (spwd)
  {
   memset(spwd, 0, sizeof(struct spwd));
@@ -163,6 +188,7 @@ int validate (char *user)
   memset(spwd, 0xFF, sizeof(struct spwd));
   memset(spwd, 0, sizeof(struct spwd));
  }
+#endif
  
  /* OK, back to normalcy */
  termios.c_lflag |= ECHO;
@@ -202,6 +228,7 @@ int main (int argc, char **argv)
    printf ("%s ", localbuf);
   printf ("login:");
   fgets(localbuf, 127, stdin);
+  if (feof(stdin)) {tock=-1; putchar('\n'); break;}
   localbuf[strlen(localbuf)-1]=0;
   if (!*localbuf) {tock++; continue;}
   if (!validate(localbuf)) break;
