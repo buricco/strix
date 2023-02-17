@@ -30,7 +30,7 @@
  * It can only handle checking credentials and chaining into the login shell.
  * Not every possible security gotcha is accounted for either.
  * 
- * shadow.h and its functions seem to be Linux-specific.
+ * shadow.h and its functions seem to be specific to SVR4 and Linux.
  */
 
 #include <crypt.h>
@@ -266,6 +266,8 @@ int main (int argc, char **argv)
 
  signal(SIGQUIT, SIG_DFL);
  signal(SIGINT, SIG_DFL);
+ 
+ /* XXX: Register a login in utmp at this point */
  
  /* Chain into the shell. */
  execl(p->pw_shell, localbuf, 0);

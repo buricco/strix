@@ -157,6 +157,9 @@ int main (int argc, char **argv)
  setuid(p->pw_uid);
  signal(SIGQUIT, SIG_DFL);
  signal(SIGINT, SIG_DFL);
+ 
+ /* XXX: Register a login in utmp at this point */
+ 
  printf ("Entering system maintenance mode.\n");
  execl ("/bin/sh", "-sh", "-", 0);
  fprintf (stderr, "sulogin: Internal error: could not exec /bin/sh\n");
