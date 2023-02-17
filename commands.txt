@@ -90,6 +90,7 @@ ts
 tty
 uname
 unlink
+users
 wc
 which
 who

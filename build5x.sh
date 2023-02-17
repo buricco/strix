@@ -131,6 +131,7 @@ $CC -D__SVR4__ -o ../bin/time time.c
 $CC -D__SVR4__ -o ../bin/tty tty.c
 $CC -D__SVR4__ -o ../bin/uname uname.c -lucb
 $CC -D__SVR4__ -o ../bin/unlink unlink.c
+$CC -D__SVR4__ -o ../bin/users users.c
 $CC -D__SVR4__ -o ../bin/wc wc.c
 $CC -D__SVR4__ -o ../bin/which which.c
 $CC -D__SVR4__ -o ../bin/who who.c

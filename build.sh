@@ -154,6 +154,7 @@ $CC -o ../bin/ts ts.c
 $CC -o ../bin/tty tty.c
 $CC -o ../bin/uname uname.c
 $CC -o ../bin/unlink unlink.c
+[ "$UNAME" = OpenBSD ] || [ "$UNAME" = FreeBSD ] || $CC -o ../bin/users users.c
 $CC -o ../bin/wc wc.c
 [ "$UNAME" = OpenBSD ] || [ "$UNAME" = FreeBSD ] || $CC -o ../bin/who who.c
 $CC -o ../bin/which which.c
