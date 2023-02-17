@@ -33,3 +33,9 @@ Tested: Debian 11 Linux, NetBSD 9.0, FreeBSD 13.1, OpenBSD 7.2 (all AMD64).
 rm(1) has a mollyguard.
 
 dummy.sh exists so that commands built into the shell can be exec(3)'d.
+
+The sha2 checksum utility (sha224, sha256, sha384, sha512; source file sha2.c,
+main binary sha512) uses the actual code, 3-clause BSD licensed, from the
+appropriate RFC, and this is implemented via a library, librfc6234.a, which is
+compiled as needed.  I will probably merge the front end into cksum at a later
+date.

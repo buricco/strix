@@ -62,7 +62,7 @@ cp support/signames_svr4.h support/signames.h
 mkdir bin 2>/dev/null
 mkdir obj 2>/dev/null
 mkdir lib 2>/dev/null
-cd support/regex
+cd support/libregex
 $CC -D__SVR4__ -c -o ../../obj/regcomp.o regcomp.c
 $CC -D__SVR4__ -c -o ../../obj/regerror.o regerror.c
 $CC -D__SVR4__ -c -o ../../obj/regexec.o regexec.c
@@ -97,7 +97,7 @@ $CC -D__SVR4__ -o ../bin/factor factor.c
 $CC -D__SVR4__ -o ../bin/fmtmsg fmtmsg.c
 $CC -D__SVR4__ -I../support -o ../bin/fold fold.c ../support/getline.c
 $CC -D__SVR4__ -o ../bin/getopt getopt.c
-$CC -D__SVR4__ -I../support -I../support/regex -o ../bin/grep grep.c ../support/getline.c -L../lib -lregex
+$CC -D__SVR4__ -I../support -I../support/libregex -o ../bin/grep grep.c ../support/getline.c -L../lib -lregex
 $CC -D__SVR4__ -I../support -o ../bin/head head.c ../support/getline.c
 $CC -D__SVR4__ -I../support -o ../bin/id id.c ../support/getgrouplist.c
 $CC -D__SVR4__ -o ../bin/hostid hostid.c -lucb

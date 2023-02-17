@@ -49,6 +49,7 @@ static char *progname;
  * rather barebones implementation.
  * 
  * Some switches are currently partially or totally broken.
+ * Known to be broken: total -FHLps, partial -Ri
  */
                               /***********************************************/
 #define MODE_1  0x00000001UL  /* List                                        */
@@ -519,8 +520,8 @@ void sortlist (char **x, size_t *y, time_t *z, int count)
     {
      if (mode&MODE_r)
      {
-      if (mode&MODE_S) cmp=(y[i]<y[j]);
-      if (mode&MODE_t) cmp=(z[i]<z[j]);
+      if (mode&MODE_S) cmp=(y[i]>y[j]);
+      if (mode&MODE_t) cmp=(z[i]>z[j]);
      }
      else
      {
@@ -717,8 +718,8 @@ int main (int argc, char **argv)
  mode=0;
  
  /* Different defaults if invoked as dir or vdir; GNU */
- if (!strcmp(progname, "dir")) mode=MODE_C|mode_b;
- if (!strcmp(progname, "vdir")) mode=MODE_l|mode_b;
+ if (!strcmp(progname, "dir")) mode=MODE_C|MODE_b;
+ if (!strcmp(progname, "vdir")) mode=MODE_l|MODE_b;
  
  while (-1!=(e=getopt(argc, argv, "1ACFHLPRSTabcdfgiklmnopqrstux")))
  {

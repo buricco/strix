@@ -25,10 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * This program is currently untested regarding recursive or folder copying.
- * Basic file copying is tested and works.
- */
+/* ALERT: When target is a directory, cp may break. */
 
 #define _XOPEN_SOURCE 500
 #define _DEFAULT_SOURCE

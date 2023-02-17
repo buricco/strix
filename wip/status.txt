@@ -1,0 +1,26 @@
+compress
+  gzip needs to be reworked to support -n and -N.
+  LZW support is missing.
+
+cp
+  Breaks if target is a directory.
+  Doesn't "touch" folders.  (Not a breaker)
+
+df
+  Doesn't work outside of Linux.
+
+login
+  Unfinished.
+
+ls
+  Several switches are buggy.
+
+sulogin
+  Unfinished.
+
+truncate
+  Crippled -s switch.
+
+uptime
+  Doesn't count users.
+  Doesn't work outside of Linux.
